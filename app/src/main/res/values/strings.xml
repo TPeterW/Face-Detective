@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">Face Detective</string>
+
+    <string name="action_settings">Settings</string>
+
+    <!--Controls text-->
+    <string name="getImageButtonText">Get Image</string>
+    <string name="detextButtonText">Detect</string>
+
+    <!--Title Bar text-->
+    <string name="selectImage">Image Selection</string>
+    <string name="imageSelected">Image Selected</string>
+    <string name="detecting">Detecting...</string>
+
+    <!--TextView-->
+    <string name="detectWithArrow">Detect --></string>
+
+    <!--Toast-->
+    <string name="noPhotoSelected">Please select a photo</string>
+
+    <!--<string name="server_uri">http://api.us.faceplusplus.com/</string>-->
+</resources>

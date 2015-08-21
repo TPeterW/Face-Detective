@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">颜值检测仪</string>
+    <string name="action_settings">设置</string>
+    <string name="detectWithArrow">检测--></string>
+    <string name="detecting">检测中...</string>
+    <string name="detextButtonText">检测</string>
+    <string name="getImageButtonText">获取照片</string>
+    <string name="imageSelected">已选择的照片</string>
+    <string name="noPhotoSelected">请选择一张照片</string>
+    <string name="selectImage">照片选择</string>
+</resources>
