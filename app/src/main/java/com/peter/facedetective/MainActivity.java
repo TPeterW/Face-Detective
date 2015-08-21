@@ -1,5 +1,6 @@
 package com.peter.facedetective;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -7,11 +8,13 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.net.Uri;
+import android.os.Environment;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -29,17 +32,24 @@ import com.facepp.result.FaceppResult;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.text.SimpleDateFormat;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private static final int PICK_CODE = 5221;
     private ImageButton detect;
     private Button getImage;
     private ImageView photo;
-    private TextView count;
+//    private TextView count;
     private FrameLayout waiting;
     private ProgressBar ring;
+    private Button saveImage;
 
     private String currentPhotoStr;
 //    private String lastPhotoStr;
+    private boolean hasAnalysedPhoto;
 
     private Bitmap photoImage;
     private Paint paint;
@@ -52,6 +62,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         initViews();
         initEvents();
 
+        //确认暂时还没有照片可以保存
+        hasAnalysedPhoto = false;
+
         paint = new Paint();
         setTitle(R.string.app_name);
     }
@@ -59,15 +72,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void initEvents() {
         getImage.setOnClickListener(this);
         detect.setOnClickListener(this);
+        saveImage.setOnClickListener(this);
     }
 
     private void initViews() {
         detect = (ImageButton)findViewById(R.id.detect);
         getImage = (Button)findViewById(R.id.getImage);
         photo = (ImageView)findViewById(R.id.photo);
-        count = (TextView)findViewById(R.id.count);
+//        count = (TextView)findViewById(R.id.count);
         waiting = (FrameLayout)findViewById(R.id.waiting);
         ring = (ProgressBar)findViewById(R.id.ring);
+        saveImage = (Button)findViewById(R.id.saveImage);
     }
 
     @Override
@@ -95,6 +110,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         switch (v.getId()){
+            case R.id.saveImage:
+                if (hasAnalysedPhoto == false)
+                    Toast.makeText(this, R.string.noAvailablePhotoToSave, Toast.LENGTH_SHORT).show();
+                else {
+                    // TODO: 保存照片
+                    saveImageToGallery(MainActivity.this);
+                }
+
+                break;
+
             case R.id.getImage:
                 setTitle(R.string.selectImage);
                 Intent intent = new Intent(Intent.ACTION_PICK);
@@ -108,8 +133,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     setTitle(R.string.detecting);
                     waiting.setVisibility(View.VISIBLE);
                     ring.setVisibility(View.VISIBLE);
-                    count.setVisibility(View.INVISIBLE);
-
+//                    count.setVisibility(View.INVISIBLE);
                 }
                 else {
                     Toast.makeText(this, R.string.noPhotoSelected, Toast.LENGTH_SHORT).show();
@@ -136,8 +160,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                        setTitle(R.string.app_name);
                     }
                 }, MainActivity.this);
+
+                hasAnalysedPhoto = true;
                 break;
         }
+    }
+
+    private void saveImageToGallery(Context context){
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "FACEDET_" + timeStamp;
+        Log.i("TAG", imageFileName);
+
+        /*
+        方法一
+         */
+//        File sd = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+//        Log.i("TAG", sd.toString());
+//
+//        Intent saveImage = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+//        File outputImage = new File(currentPhotoStr);
+//        Uri contentUri = Uri.fromFile(outputImage);
+//
+//        saveImage.setData(contentUri);
+//        this.sendBroadcast(saveImage);
+
+        /*
+        方法二
+         */
+        Bitmap forSave = photoImage;
+        MediaStore.Images.Media.insertImage(context.getContentResolver(), forSave, imageFileName,timeStamp);
+
+        Toast.makeText(context, R.string.pictureIsSaved, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -155,7 +208,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 resizePhoto();
 
                 photo.setImageBitmap(photoImage);
-                count.setText(R.string.detectWithArrow);
+//                count.setText(R.string.detectWithArrow);
             }
         }
 
@@ -188,7 +241,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 case MSG_SUCCESS:
                     waiting.setVisibility(View.INVISIBLE);           // INVISIBLE 还是 GONE 要注意
                     ring.setVisibility(View.INVISIBLE);
-                    count.setVisibility(View.VISIBLE);
+//                    count.setVisibility(View.VISIBLE);
                     FaceppResult result = (FaceppResult)msg.obj;
 
                     // 解析JsonObject，绘制脸部框
@@ -201,14 +254,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 case MSG_ERROR:
                     waiting.setVisibility(View.GONE);
                     ring.setVisibility(View.INVISIBLE);
-                    count.setVisibility(View.VISIBLE);
+//                    count.setVisibility(View.VISIBLE);
                     String errorMsg = msg.obj.toString();
 
                     if(TextUtils.isEmpty(errorMsg)){
-                        count.setText("Error");
+                        Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
+//                        count.setText("Error");
                     }
                     else {
-                        count.setText(errorMsg);
+                        Toast.makeText(MainActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
+//                        count.setText(errorMsg);
                     }
 
                     break;
@@ -233,7 +288,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             setTitle(R.string.app_name);
 
             int faceCount = faces.length();
-            count.setText("No: " + faceCount);
+//            count.setText("No: " + faceCount);
 
             for(int i = 0; i < faceCount; i++){
                 // 拿到单独的face对象

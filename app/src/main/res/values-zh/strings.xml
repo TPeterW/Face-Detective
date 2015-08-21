@@ -9,4 +9,9 @@
     <string name="imageSelected">已选择的照片</string>
     <string name="noPhotoSelected">请选择一张照片</string>
     <string name="selectImage">照片选择</string>
+    <string name="saveImageButtonText">保存图片</string>
+    <string name="noAvailablePhotoToSave">没有可以保存的照片</string>
+    <string name="pictureIsSaved">图片已被保存在“Pictures”文件夹</string>
+    <string name="unknownException">位置错误</string>
+    <string name="foundException">发现异常</string>
 </resources>

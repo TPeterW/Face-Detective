@@ -11,6 +11,7 @@ import com.facepp.http.PostParameters;
 import com.facepp.result.FaceppResult;
 
 import java.io.ByteArrayOutputStream;
+import java.net.SocketTimeoutException;
 
 /**
  * Created by 韬 on 2015/8/20 0020.
@@ -55,7 +56,9 @@ public class FaceppDetect {
                         callback.error(e);
                     }
 
-                    Toast.makeText(context, "Exception Found", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, R.string.foundException, Toast.LENGTH_SHORT).show();
+                } catch (Exception e){
+                    Toast.makeText(context, R.string.unknownException, Toast.LENGTH_SHORT).show();
                 }
 
             }

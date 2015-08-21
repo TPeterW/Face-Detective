@@ -5,6 +5,7 @@
 
     <!--Controls text-->
     <string name="getImageButtonText">Get Image</string>
+    <string name="saveImageButtonText">Save Image</string>
     <string name="detextButtonText">Detect</string>
 
     <!--Title Bar text-->
@@ -17,6 +18,11 @@
 
     <!--Toast-->
     <string name="noPhotoSelected">Please select a photo</string>
+    <string name="noAvailablePhotoToSave">No photo available to save</string>
+    <string name="pictureIsSaved">Photo is saved to "Pictures" folder in your Gallery</string>
+    <string name="foundException">Exception Found</string>
+    <!--<string name="timeOut">Time out (please check network)</string>-->
+    <string name="unknownException">Unknown Exception</string>
 
     <!--<string name="server_uri">http://api.us.faceplusplus.com/</string>-->
 </resources>
