@@ -14,4 +14,9 @@
     <string name="pictureIsSaved">图片已被保存在“Pictures”文件夹</string>
     <string name="unknownException">位置错误</string>
     <string name="foundException">发现异常</string>
+    <string name="actionCamera">拍摄照片</string>
+    <string name="actionShareFacebook">分享到Facebook</string>
+    <string name="actionShareTwitter">分享到Twitter</string>
+    <string name="actionShareWechat">在朋友圈发布</string>
+    <string name="actionShareWeibo">分享到微博</string>
 </resources>

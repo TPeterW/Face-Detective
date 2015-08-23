@@ -25,4 +25,12 @@
     <string name="unknownException">Unknown Exception</string>
 
     <!--<string name="server_uri">http://api.us.faceplusplus.com/</string>-->
+
+    <!--Action Bar Icons-->
+    <string name="actionCamera">Capture Photo</string>
+    <string name="actionShareFacebook">Share in Facebook</string>
+    <string name="actionShareTwitter">Tweet about it</string>
+    <string name="actionShareWeibo">Share in Weibo</string>
+    <string name="actionShareWechat">Post in Moments</string>
+
 </resources>
