@@ -2,6 +2,8 @@ package com.peter.facedetective;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -14,7 +16,9 @@ import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,6 +30,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.appevents.AppEventsLogger;
 import com.facepp.error.FaceppParseException;
 import com.facepp.result.FaceppResult;
 
@@ -34,6 +39,9 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import android.content.pm.Signature;
 import java.util.*;
 import java.text.SimpleDateFormat;
 
@@ -51,8 +59,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //    private String lastPhotoStr;
     private boolean hasAnalysedPhoto;
 
-    private Bitmap photoImage;
+    private Bitmap photoImage;         // current
+    private Bitmap editedImage;      // edited
     private Paint paint;
+
+    private long lastPressedTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +78,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         paint = new Paint();
         setTitle(R.string.app_name);
+        lastPressedTime = System.currentTimeMillis() - 2000;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Logs 'install' and 'app activate' App Events.
+        AppEventsLogger.activateApp(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        // Logs 'app deactivate' App Event.
+        AppEventsLogger.deactivateApp(this);
     }
 
     private void initEvents() {
@@ -138,6 +166,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 else {
                     Toast.makeText(this, R.string.noPhotoSelected, Toast.LENGTH_SHORT).show();
+                    writeHashKey();
                     break;
                 }
 
@@ -249,6 +278,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     prepareResultBitmap(result);
 
                     photo.setImageBitmap(photoImage);
+                    editedImage = photoImage;                   // 将加了框的图像传入“已修改图像中”
 
                     break;
 
@@ -378,5 +408,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ageAndGender.destroyDrawingCache();
 
         return bitmap;
+    }
+
+    private void writeHashKey(){
+        PackageInfo info;
+        try {
+            info = getPackageManager().getPackageInfo("com.peter.facedetective", PackageManager.GET_SIGNATURES);
+            for (Signature signature : info.signatures) {
+                MessageDigest md;
+                md = MessageDigest.getInstance("SHA");
+                md.update(signature.toByteArray());
+                String something = new String(Base64.encode(md.digest(), 0));
+                //String something = new String(Base64.encodeBytes(md.digest()));
+                Log.i("TAG", something);
+            }
+        } catch (PackageManager.NameNotFoundException e1) {
+            Log.e("name not found", e1.toString());
+        } catch (NoSuchAlgorithmException e) {
+            Log.e("no such an algorithm", e.toString());
+        } catch (Exception e) {
+            Log.e("exception", e.toString());
+        }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        long currentPressedTime = System.currentTimeMillis();
+
+        if(keyCode == KeyEvent.KEYCODE_BACK){
+            if((currentPressedTime - lastPressedTime) > 2000){
+                Toast.makeText(MainActivity.this, R.string.pressAgainExit, Toast.LENGTH_SHORT).show();
+                lastPressedTime = currentPressedTime;
+            }
+            else {
+                System.exit(0);
+            }
+        }
+        return true;
+
+//        return super.onKeyDown(keyCode, event);
     }
 }

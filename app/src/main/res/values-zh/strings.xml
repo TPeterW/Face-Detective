@@ -19,4 +19,6 @@
     <string name="actionShareTwitter">分享到Twitter</string>
     <string name="actionShareWechat">在朋友圈发布</string>
     <string name="actionShareWeibo">分享到微博</string>
+    <string name="facebook_app_id">912125312196241</string>
+    <string name="pressAgainExit">再按一次退出</string>
 </resources>
