@@ -1,5 +1,6 @@
 package com.peter.facedetective;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -441,9 +442,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 lastPressedTime = currentPressedTime;
             }
             else {
-                System.exit(0);
+                this.finish();
             }
         }
+
         return true;
 
 //        return super.onKeyDown(keyCode, event);
