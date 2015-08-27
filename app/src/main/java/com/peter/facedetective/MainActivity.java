@@ -60,11 +60,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //    private String lastPhotoStr;
     private boolean hasAnalysedPhoto;
 
-    private Bitmap photoImage;         // current
-    private Bitmap editedImage;      // edited
+    private Bitmap photoImage;          // current
+    private Bitmap editedImage;         // edited
     private Paint paint;
 
+    // for capturing image
+    private Uri preinsertedUri;
+    private File photoFile;
+
     private long lastPressedTime;
+
+    final int REQUEST_TAKE_PHOTO = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,14 +134,61 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
+        switch (id){
+            case R.id.action_camera:
+                try{
+                    takePhoto();
+                }
+                catch (Exception e){
+                    // do nothing
+                }
+//                Toast.makeText(this, "Capture Photo", Toast.LENGTH_SHORT).show();
+                return true;
+            default:
+                Toast.makeText(MainActivity.this, R.string.underConstruction, Toast.LENGTH_SHORT).show();
+                return super.onOptionsItemSelected(item);
+        }
+    }
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+    private void takePhoto() throws IOException{
+        Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // ensure that there is a camera activity to handle the intent
+        if(takePicture.resolveActivity(getPackageManager()) != null){
+            photoFile = null;
+            try {
+                photoFile = createImageFile();
+            }
+            catch (IOException e){
+                Toast.makeText(this, R.string.somethingHappened, Toast.LENGTH_SHORT).show();
+            }
+
+            // continue if successfully created
+            if(photoFile != null){
+                // TODO: save photo to gallery first
+                takePicture.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+                startActivityForResult(takePicture, REQUEST_TAKE_PHOTO);
+            }
         }
 
-        return super.onOptionsItemSelected(item);
     }
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "FACEDET_" + timeStamp;
+        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+//        currentPhotoStr = "file:" + image.getAbsolutePath();
+        currentPhotoStr = image.getAbsolutePath();
+        return image;
+    }
+
 
     @Override
     public void onClick(View v) {
@@ -144,7 +197,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (hasAnalysedPhoto == false)
                     Toast.makeText(this, R.string.noAvailablePhotoToSave, Toast.LENGTH_SHORT).show();
                 else {
-                    // TODO: 保存照片
                     saveImageToGallery(MainActivity.this);
                 }
 
@@ -167,7 +219,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 else {
                     Toast.makeText(this, R.string.noPhotoSelected, Toast.LENGTH_SHORT).show();
-                    writeHashKey();
+//                    writeHashKey();
                     break;
                 }
 
@@ -243,6 +295,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
 
+        if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK){
+//            Bundle extras = data.getExtras();
+//            Bitmap imageBitmap = (Bitmap) extras.get("data");
+//            photo.setImageBitmap(imageBitmap);
+
+            Log.i("CAPTURE", currentPhotoStr);
+            resizePhoto();
+
+            photo.setImageBitmap(photoImage);
+        }
+
         super.onActivityResult(requestCode, resultCode, data);
     }
 
@@ -265,44 +328,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int MSG_SUCCESS = 0x111;
     private static final int MSG_ERROR = 0x112;
 
-    android.os.Handler handler = new android.os.Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what){
-                case MSG_SUCCESS:
-                    waiting.setVisibility(View.INVISIBLE);           // INVISIBLE 还是 GONE 要注意
-                    ring.setVisibility(View.INVISIBLE);
+        android.os.Handler handler = new android.os.Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                switch (msg.what) {
+                    case MSG_SUCCESS:
+                        waiting.setVisibility(View.INVISIBLE);           // INVISIBLE 还是 GONE 要注意
+                        ring.setVisibility(View.INVISIBLE);
 //                    count.setVisibility(View.VISIBLE);
-                    FaceppResult result = (FaceppResult)msg.obj;
+                        FaceppResult result = (FaceppResult) msg.obj;
 
-                    // 解析JsonObject，绘制脸部框
-                    prepareResultBitmap(result);
+                        // 解析JsonObject，绘制脸部框
+                        prepareResultBitmap(result);
 
-                    photo.setImageBitmap(photoImage);
-                    editedImage = photoImage;                   // 将加了框的图像传入“已修改图像中”
+                        photo.setImageBitmap(photoImage);
+                        editedImage = photoImage;                   // 将加了框的图像传入“已修改图像中”
 
-                    break;
+                        break;
 
-                case MSG_ERROR:
-                    waiting.setVisibility(View.GONE);
-                    ring.setVisibility(View.INVISIBLE);
+                    case MSG_ERROR:
+                        waiting.setVisibility(View.GONE);
+                        ring.setVisibility(View.INVISIBLE);
 //                    count.setVisibility(View.VISIBLE);
-                    String errorMsg = msg.obj.toString();
+                        String errorMsg = msg.obj.toString();
 
-                    if(TextUtils.isEmpty(errorMsg)){
-                        Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
+                        if (TextUtils.isEmpty(errorMsg)) {
+                            Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
 //                        count.setText("Error");
-                    }
-                    else {
-                        Toast.makeText(MainActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(MainActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
 //                        count.setText(errorMsg);
-                    }
+                        }
 
-                    break;
+                        break;
+                }
+                super.handleMessage(msg);
             }
-            super.handleMessage(msg);
-        }
-    };
+        };
 
     private void prepareResultBitmap(FaceppResult result) {
         // 根据原图创建一个新的空画板
@@ -411,26 +473,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return bitmap;
     }
 
-    private void writeHashKey(){
-        PackageInfo info;
-        try {
-            info = getPackageManager().getPackageInfo("com.peter.facedetective", PackageManager.GET_SIGNATURES);
-            for (Signature signature : info.signatures) {
-                MessageDigest md;
-                md = MessageDigest.getInstance("SHA");
-                md.update(signature.toByteArray());
-                String something = new String(Base64.encode(md.digest(), 0));
-                //String something = new String(Base64.encodeBytes(md.digest()));
-                Log.i("TAG", something);
-            }
-        } catch (PackageManager.NameNotFoundException e1) {
-            Log.e("name not found", e1.toString());
-        } catch (NoSuchAlgorithmException e) {
-            Log.e("no such an algorithm", e.toString());
-        } catch (Exception e) {
-            Log.e("exception", e.toString());
-        }
-    }
+    /*
+    Hash key (for Facebook Plug-in)
+     */
+//    private void writeHashKey(){
+//        PackageInfo info;
+//        try {
+//            info = getPackageManager().getPackageInfo("com.peter.facedetective", PackageManager.GET_SIGNATURES);
+//            for (Signature signature : info.signatures) {
+//                MessageDigest md;
+//                md = MessageDigest.getInstance("SHA");
+//                md.update(signature.toByteArray());
+//                String something = new String(Base64.encode(md.digest(), 0));
+//                //String something = new String(Base64.encodeBytes(md.digest()));
+//                Log.i("TAG", something);
+//            }
+//        } catch (PackageManager.NameNotFoundException e1) {
+//            Log.e("name not found", e1.toString());
+//        } catch (NoSuchAlgorithmException e) {
+//            Log.e("no such an algorithm", e.toString());
+//        } catch (Exception e) {
+//            Log.e("exception", e.toString());
+//        }
+//    }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {

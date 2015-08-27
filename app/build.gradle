@@ -8,6 +8,7 @@ android {
         applicationId "com.peter.facedetective"
         minSdkVersion 14
         targetSdkVersion 22
+        maxSdkVersion 23
         versionCode 1
         versionName "1.0"
     }
