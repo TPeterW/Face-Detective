@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">颜值检测仪</string>
+    <string name="app_name">年龄检测仪</string>
     <string name="action_settings">设置</string>
     <string name="detectWithArrow">检测--></string>
     <string name="detecting">检测中...</string>
