@@ -1,11 +1,13 @@
 package com.peter.facedetective;
 
 import android.app.Activity;
+import android.app.Notification;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.drm.DrmStore;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -34,6 +36,8 @@ import android.widget.Toast;
 import com.facebook.appevents.AppEventsLogger;
 import com.facepp.error.FaceppParseException;
 import com.facepp.result.FaceppResult;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -72,6 +76,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     final int REQUEST_TAKE_PHOTO = 1;
 
+    private Tracker mTracker;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,11 +92,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         paint = new Paint();
         setTitle(R.string.app_name);
         lastPressedTime = System.currentTimeMillis() - 2000;
+
+        // Google Analytics
+        AnalyticsApplication application = (AnalyticsApplication) getApplication();
+        mTracker = application.getDefaultTracker();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        Log.i("TAG", "Setting screen name: ");
+        mTracker.setScreenName("MainScreen");
+        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
 
         // Logs 'install' and 'app activate' App Events.
         AppEventsLogger.activateApp(this);
@@ -143,6 +156,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     // do nothing
                 }
 //                Toast.makeText(this, "Capture Photo", Toast.LENGTH_SHORT).show();
+                mTracker.send(new HitBuilders.EventBuilder()
+                .setCategory("Action")
+                .setAction("Take Photo")
+                .build());
+
                 return true;
             default:
                 Toast.makeText(MainActivity.this, R.string.underConstruction, Toast.LENGTH_SHORT).show();
@@ -200,6 +218,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     saveImageToGallery(MainActivity.this);
                 }
 
+                mTracker.send(new HitBuilders.EventBuilder()
+                        .setCategory("Action")
+                        .setAction("Save Photo")
+                        .build());
+
                 break;
 
             case R.id.getImage:
@@ -208,6 +231,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 intent.setType("image/*");
                 startActivityForResult(intent, PICK_CODE);
 //                setTitle("Detect Faces");
+
+                mTracker.send(new HitBuilders.EventBuilder()
+                        .setCategory("Action")
+                        .setAction("Pick Photo From Gallery")
+                        .build());
                 break;
 
             case R.id.detect:
@@ -222,6 +250,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                    writeHashKey();
                     break;
                 }
+
+                mTracker.send(new HitBuilders.EventBuilder()
+                        .setCategory("Action")
+                        .setAction("Detect Photo")
+                        .build());
 
                 resizePhoto();
 
