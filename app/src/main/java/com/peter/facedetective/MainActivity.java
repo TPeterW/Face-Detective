@@ -39,6 +39,12 @@ import com.facepp.result.FaceppResult;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 
+import com.twitter.sdk.android.Twitter;
+import com.twitter.sdk.android.core.TwitterAuthConfig;
+import com.twitter.sdk.android.core.TwitterCore;
+import com.twitter.sdk.android.tweetcomposer.TweetComposer;
+
+import io.fabric.sdk.android.Fabric;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -51,6 +57,11 @@ import java.util.*;
 import java.text.SimpleDateFormat;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+
+    // Note: Your consumer key and secret should be obfuscated in your source code before shipping.
+    private static final String TWITTER_KEY = "CaEup4hD9PE80usRXTqez80Yo";
+    private static final String TWITTER_SECRET = "kDEkAOOz2oFnvBn8aneY7YtJtaBP5npSNT4VtnKP826A3OMIRi";
+
     private static final int PICK_CODE = 5221;
     private ImageButton detect;
     private Button getImage;
@@ -96,6 +107,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // Google Analytics
         AnalyticsApplication application = (AnalyticsApplication) getApplication();
         mTracker = application.getDefaultTracker();
+
+        // Twitter Sharing
+        TwitterAuthConfig authConfig =  new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
+        Fabric.with(this, new TwitterCore(authConfig), new TweetComposer());
     }
 
     @Override
@@ -162,10 +177,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .build());
 
                 return true;
-            default:
-                Toast.makeText(MainActivity.this, R.string.underConstruction, Toast.LENGTH_SHORT).show();
-                return super.onOptionsItemSelected(item);
+
+            case R.id.action_share_twitter:
+                if(hasAnalysedPhoto) {
+                    File fileToShare = new File(currentPhotoStr);
+                    Uri imageUri = Uri.fromFile(fileToShare);
+                    TweetComposer.Builder builder = new TweetComposer.Builder(this)
+                            .text(getResources().getString(R.string.twitter_sharing))
+                            .image(imageUri);
+                    builder.show();
+                }
+                else {
+                    Toast.makeText(MainActivity.this, R.string.noAvailablePhotoToShare, Toast.LENGTH_SHORT).show();
+                }
+                break;
         }
+
+        return super.onOptionsItemSelected(item);
     }
 
     private void takePhoto() throws IOException{
@@ -212,7 +240,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.saveImage:
-                if (hasAnalysedPhoto == false)
+                if (!hasAnalysedPhoto)
                     Toast.makeText(this, R.string.noAvailablePhotoToSave, Toast.LENGTH_SHORT).show();
                 else {
                     saveImageToGallery(MainActivity.this);
@@ -304,7 +332,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         方法二
          */
         Bitmap forSave = photoImage;
-        MediaStore.Images.Media.insertImage(context.getContentResolver(), forSave, imageFileName,timeStamp);
+        MediaStore.Images.Media.insertImage(context.getContentResolver(), forSave, imageFileName, timeStamp);
 
         Toast.makeText(context, R.string.pictureIsSaved, Toast.LENGTH_SHORT).show();
     }

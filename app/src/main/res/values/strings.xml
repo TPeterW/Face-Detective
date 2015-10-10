@@ -13,12 +13,10 @@
     <string name="imageSelected">Image Selected</string>
     <string name="detecting">Detecting...</string>
 
-    <!--TextView-->
-    <string name="detectWithArrow">Detect --></string>
-
     <!--Toast-->
     <string name="noPhotoSelected">Please select a photo</string>
     <string name="noAvailablePhotoToSave">No photo available to save</string>
+    <string name="noAvailablePhotoToShare">No photo available to share</string>
     <string name="pictureIsSaved">Photo is saved to "Pictures" folder in your Gallery</string>
     <string name="foundException">Exception Found</string>
     <string name="unknownException">Unknown Exception</string>
@@ -37,5 +35,8 @@
 
     <!--API-->
     <string name="facebook_app_id">912125312196241</string>
+
+    <!--Sharing-->
+    <string name="twitter_sharing">Check out how old I look in "Face-Detective"!</string>
 
 </resources>

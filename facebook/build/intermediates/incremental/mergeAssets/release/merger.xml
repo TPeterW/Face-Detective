@@ -1,2 +1,2 @@
 <?xml version="1.0" encoding="utf-8"?>
-<merger version="3"><dataSet config="main"><source path="C:\AndroidStudioProjects\APIs\FACE++\Face-Detective\facebook\src\main\assets"/></dataSet><dataSet config="release"><source path="C:\AndroidStudioProjects\APIs\FACE++\Face-Detective\facebook\src\release\assets"/></dataSet></merger>
+<merger version="3"><dataSet config="main"><source path="/Users/Peter/Documents/AndroidProjects/Face-Detective/facebook/src/main/assets"/></dataSet><dataSet config="release"><source path="/Users/Peter/Documents/AndroidProjects/Face-Detective/facebook/src/release/assets"/></dataSet></merger>

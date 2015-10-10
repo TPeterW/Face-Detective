@@ -1,21 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:facedetective="http://schemas.android.com/apk/res-auto">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item android:id="@+id/action_camera"
         android:icon="@drawable/action_camera"
         android:title="@string/actionCamera"
-        facedetective:showAsAction="always"/>
+        app:showAsAction="always"/>
 
-    <item android:id="@+id/action_share_facebook"
-        android:title="@string/actionShareFacebook"/>
+    <!--<item android:id="@+id/action_share_facebook"-->
+        <!--android:title="@string/actionShareFacebook"/>-->
 
     <item android:id="@+id/action_share_twitter"
-        android:title="@string/actionShareTwitter"/>
+        android:icon="@drawable/ic_action_share_twitter"
+        android:title="@string/actionShareTwitter"
+        app:showAsAction="always"/>
 
-    <item android:id="@+id/action_share_weibo"
-        android:title="@string/actionShareWeibo"/>
+    <!--<item android:id="@+id/action_share_weibo"-->
+        <!--android:title="@string/actionShareWeibo"/>-->
 
-    <item android:id="@+id/action_share_wechat"
-        android:title="@string/actionShareWechat"/>
+    <!--<item android:id="@+id/action_share_wechat"-->
+        <!--android:title="@string/actionShareWechat"/>-->
 
 </menu>
