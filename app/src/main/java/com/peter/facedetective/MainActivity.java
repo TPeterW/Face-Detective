@@ -48,8 +48,13 @@ import io.fabric.sdk.android.Fabric;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import android.content.pm.Signature;
@@ -181,6 +186,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.action_share_twitter:
                 if(hasAnalysedPhoto) {
                     File fileToShare = new File(currentPhotoStr);
+                    OutputStream os = null;
+                    try {
+                        os = new BufferedOutputStream(new FileOutputStream(fileToShare));
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                    Bitmap bitmap = photoImage;
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 0, os);
+                    try {
+                        os.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                     Uri imageUri = Uri.fromFile(fileToShare);
                     TweetComposer.Builder builder = new TweetComposer.Builder(this)
                             .text(getResources().getString(R.string.twitter_sharing))
