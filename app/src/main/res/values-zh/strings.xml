@@ -25,4 +25,6 @@
     <string name="underConstruction">此功能正在开发中</string>
     <string name="twitter_sharing">快来年龄检测仪显示我多大!</string>
     <string name="noAvailablePhotoToShare">没有可以分享的照片</string>
+    <string name="needCameraPermission">年龄检测仪需要获取相机的权限来打开照相功能</string>
+    <string name="noCameraPermission">没有足够的权限使用相机</string>
 </resources>

@@ -23,6 +23,8 @@
     <string name="pressAgainExit">Press again and exit</string>
     <string name="somethingHappened">Something Happened</string>
     <string name="underConstruction">Under Construction</string>
+    <string name="noCameraPermission">Does not have permission to access camera</string>
+    <string name="needCameraPermission">Face Detective needs permission to access your camera in order to take a photo</string>
 
     <!--<string name="server_uri">http://api.us.faceplusplus.com/</string>-->
 

@@ -9,9 +9,9 @@ import com.facepp.error.FaceppParseException;
 import com.facepp.http.HttpRequests;
 import com.facepp.http.PostParameters;
 import com.facepp.result.FaceppResult;
+import com.peter.facedetective.utils.Constant;
 
 import java.io.ByteArrayOutputStream;
-import java.net.SocketTimeoutException;
 
 /**
  * Created by 韬 on 2015/8/20 0020.
