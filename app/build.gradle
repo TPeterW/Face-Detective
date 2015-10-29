@@ -1,3 +1,7 @@
+apply plugin: 'com.android.application'
+apply plugin: 'io.fabric'
+apply plugin: 'com.google.gms.google-services'
+
 buildscript {
     repositories {
         maven { url 'https://maven.fabric.io/public' }
@@ -7,20 +11,16 @@ buildscript {
         classpath 'io.fabric.tools:gradle:1.+'
     }
 }
-apply plugin: 'com.android.application'
-apply plugin: 'io.fabric'
-apply plugin: 'com.google.gms.google-services'
 
 android {
     compileSdkVersion 23
     buildToolsVersion '23.0.1'
     defaultConfig {
         applicationId "com.peter.facedetective"
-        minSdkVersion 9
+        minSdkVersion 14
         targetSdkVersion 23
-        maxSdkVersion 23
-        versionCode 4
-        versionName '1.2.0.1'
+        versionCode 5
+        versionName '1.2.0.2'
     }
     buildTypes {
         release {
@@ -37,20 +37,18 @@ android {
 }
 
 repositories {
-    mavenCentral()
     jcenter()
     maven { url 'https://maven.fabric.io/public' }
 }
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:appcompat-v7:23.0.0'
-    compile 'com.google.android.gms:play-services:7.8.0'
-    compile 'com.google.android.gms:play-services-analytics:7.3.0'
     compile('com.twitter.sdk.android:tweet-composer:0.9.0@aar') {
         transitive = true;
     }
-    compile('com.twitter.sdk.android:twitter:1.8.0@aar') {
+    compile('com.twitter.sdk.android:twitter:1.9.0@aar') {
         transitive = true;
     }
+    compile 'com.android.support:appcompat-v7:23.1.0'
+    compile 'com.google.android.gms:play-services:8.1.0'
 }

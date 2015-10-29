@@ -2,6 +2,7 @@ package com.peter.facedetective;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -9,12 +10,13 @@ import com.facepp.error.FaceppParseException;
 import com.facepp.http.HttpRequests;
 import com.facepp.http.PostParameters;
 import com.facepp.result.FaceppResult;
+import com.peter.facedetective.utils.Constant;
 
 import java.io.ByteArrayOutputStream;
-import java.net.SocketTimeoutException;
 
 /**
  * Created by 韬 on 2015/8/20 0020.
+ *
  */
 public class FaceppDetect {
     public interface Callback{
@@ -28,6 +30,7 @@ public class FaceppDetect {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                Looper.prepare();
                 try{
                     // 创建请求
                     HttpRequests requests = new HttpRequests(Constant.KEY, Constant.SECRET, true);    // 不行就改成false

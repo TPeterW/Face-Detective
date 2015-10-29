@@ -1,10 +1,9 @@
-package com.peter.facedetective.utils;
+package com.peter.facedetective;
 
 import android.content.Context;
 
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
-import com.peter.facedetective.R;
 
 import java.util.HashMap;
 import java.util.Map;

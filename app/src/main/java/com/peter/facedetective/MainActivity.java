@@ -1,16 +1,21 @@
 package com.peter.facedetective;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Message;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -33,8 +38,8 @@ import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 
 import com.peter.facedetective.utils.AnalyticsApplication;
+import com.twitter.sdk.android.Twitter;
 import com.twitter.sdk.android.core.TwitterAuthConfig;
-import com.twitter.sdk.android.core.TwitterCore;
 import com.twitter.sdk.android.tweetcomposer.TweetComposer;
 
 import io.fabric.sdk.android.Fabric;
@@ -51,10 +56,11 @@ import java.util.*;
 import java.text.SimpleDateFormat;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    // TODO: check other permission
 
     // Note: Your consumer key and secret should be obfuscated in your source code before shipping.
-    private static final String TWITTER_KEY = "CaEup4hD9PE80usRXTqez80Yo";
-    private static final String TWITTER_SECRET = "kDEkAOOz2oFnvBn8aneY7YtJtaBP5npSNT4VtnKP826A3OMIRi";
+    private static final String TWITTER_KEY = "teGWfhaat5woIR9ZqqOTELPXX";
+    private static final String TWITTER_SECRET = "Cz5bMeSfmDAsjvdSnnkHmHM4d5OdwOqb2gkcr6pbFxeIgrvCzI";
 
     private static final int PICK_CODE = 5221;
     private ImageButton detect;
@@ -79,17 +85,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private long lastPressedTime;
 
-    final int REQUEST_TAKE_PHOTO = 1;
+    static final int REQUEST_TAKE_PHOTO = 1;
+    static final int PERMISSION_CAMERA_REQUEST_CODE = 101;
+    static final int PERMISSION_READ_WRITE_REQUEST_CODE = 102;
 
     private Tracker mTracker;
+
+    //TODO: change the order of create image and take picture
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        initViews();
-        initEvents();
+        initView();
+        initEvent();
 
         //确认暂时还没有照片可以保存
         hasAnalysedPhoto = false;
@@ -104,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Twitter Sharing
         TwitterAuthConfig authConfig =  new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
-        Fabric.with(this, new TwitterCore(authConfig), new TweetComposer());
+        Fabric.with(this, new TweetComposer(), new Twitter(authConfig));
     }
 
     @Override
@@ -120,20 +130,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onPause();
     }
 
-    private void initEvents() {
+    private void initEvent() {
         getImage.setOnClickListener(this);
         detect.setOnClickListener(this);
         saveImage.setOnClickListener(this);
     }
 
-    private void initViews() {
+    private void initView() {
         detect = (ImageButton)findViewById(R.id.detect);
         getImage = (Button)findViewById(R.id.getImage);
         photo = (ImageView)findViewById(R.id.photo);
-//        count = (TextView)findViewById(R.id.count);
         waiting = (FrameLayout)findViewById(R.id.waiting);
-        ring = (ProgressBar)findViewById(R.id.ring);
         saveImage = (Button)findViewById(R.id.saveImage);
+        ring = (ProgressBar)findViewById(R.id.ring);
     }
 
     @Override
@@ -152,6 +161,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int id = item.getItemId();
         switch (id){
             case R.id.action_camera:
+                if(Build.VERSION.SDK_INT >= 23){
+                    int cameraPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
+                    if (cameraPermission == PackageManager.PERMISSION_DENIED){
+                        Toast.makeText(MainActivity.this, getString(R.string.noCameraPermission), Toast.LENGTH_SHORT).show();
+                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISSION_CAMERA_REQUEST_CODE);
+                        break;
+                    }
+                }
+
                 try{
                     takePhoto();
                 }
@@ -242,6 +260,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.saveImage:
+            case R.id.getImage:
+                if(Build.VERSION.SDK_INT >= 23){
+                    int readWritePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                    if (readWritePermission == PackageManager.PERMISSION_DENIED){
+                        Toast.makeText(MainActivity.this, getString(R.string.noReadWritePermission), Toast.LENGTH_SHORT).show();
+                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_READ_WRITE_REQUEST_CODE);
+                        return;
+                    }
+                }
+                break;
+        }
+
+        switch (v.getId()){
+            case R.id.saveImage:
                 if (!hasAnalysedPhoto)
                     Toast.makeText(this, R.string.noAvailablePhotoToSave, Toast.LENGTH_SHORT).show();
                 else {
@@ -273,7 +305,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     setTitle(R.string.detecting);
                     waiting.setVisibility(View.VISIBLE);
                     ring.setVisibility(View.VISIBLE);
-//                    count.setVisibility(View.INVISIBLE);
                 }
                 else {
                     Toast.makeText(this, R.string.noPhotoSelected, Toast.LENGTH_SHORT).show();
@@ -345,7 +376,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (data != null){
                 Uri uri = data.getData();
                 Cursor cursor = getContentResolver().query(uri, null, null, null, null);
-                cursor.moveToFirst();
+                if(cursor != null)
+                    cursor.moveToFirst();
 
                 int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
                 currentPhotoStr = cursor.getString(idx);
@@ -367,6 +399,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             resizePhoto();
 
             photo.setImageBitmap(photoImage);
+        }
+        if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_CANCELED){
+            Log.i("CAPTURE", "Failed");
+            currentPhotoStr = null;
         }
 
         super.onActivityResult(requestCode, resultCode, data);
@@ -577,5 +613,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return true;
 
 //        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode){
+            case PERMISSION_CAMERA_REQUEST_CODE:
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    // all good, do nothing
+                }
+                else {
+                    Toast.makeText(MainActivity.this, getString(R.string.needCameraPermission), Toast.LENGTH_SHORT).show();
+                }
+                break;
+
+            case PERMISSION_READ_WRITE_REQUEST_CODE:
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    // all good, do nothing
+                }
+                else {
+                    Toast.makeText(MainActivity.this, getString(R.string.needReadWritePermission), Toast.LENGTH_SHORT).show();
+                }
+                break;
+        }
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 }
