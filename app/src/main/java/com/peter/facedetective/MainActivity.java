@@ -87,16 +87,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     static final int REQUEST_TAKE_PHOTO = 1;
     static final int PERMISSION_CAMERA_REQUEST_CODE = 101;
+    static final int PERMISSION_READ_WRITE_REQUEST_CODE = 102;
 
     private Tracker mTracker;
+
+    //TODO: change the order of create image and take picture
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        initViews();
-        initEvents();
+        initView();
+        initEvent();
 
         //确认暂时还没有照片可以保存
         hasAnalysedPhoto = false;
@@ -127,20 +130,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onPause();
     }
 
-    private void initEvents() {
+    private void initEvent() {
         getImage.setOnClickListener(this);
         detect.setOnClickListener(this);
         saveImage.setOnClickListener(this);
     }
 
-    private void initViews() {
+    private void initView() {
         detect = (ImageButton)findViewById(R.id.detect);
         getImage = (Button)findViewById(R.id.getImage);
         photo = (ImageView)findViewById(R.id.photo);
-//        count = (TextView)findViewById(R.id.count);
         waiting = (FrameLayout)findViewById(R.id.waiting);
-        ring = (ProgressBar)findViewById(R.id.ring);
         saveImage = (Button)findViewById(R.id.saveImage);
+        ring = (ProgressBar)findViewById(R.id.ring);
     }
 
     @Override
@@ -258,6 +260,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.saveImage:
+            case R.id.getImage:
+                if(Build.VERSION.SDK_INT >= 23){
+                    int readWritePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                    if (readWritePermission == PackageManager.PERMISSION_DENIED){
+                        Toast.makeText(MainActivity.this, getString(R.string.noReadWritePermission), Toast.LENGTH_SHORT).show();
+                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_READ_WRITE_REQUEST_CODE);
+                        return;
+                    }
+                }
+                break;
+        }
+
+        switch (v.getId()){
+            case R.id.saveImage:
                 if (!hasAnalysedPhoto)
                     Toast.makeText(this, R.string.noAvailablePhotoToSave, Toast.LENGTH_SHORT).show();
                 else {
@@ -289,7 +305,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     setTitle(R.string.detecting);
                     waiting.setVisibility(View.VISIBLE);
                     ring.setVisibility(View.VISIBLE);
-//                    count.setVisibility(View.INVISIBLE);
                 }
                 else {
                     Toast.makeText(this, R.string.noPhotoSelected, Toast.LENGTH_SHORT).show();
@@ -361,7 +376,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (data != null){
                 Uri uri = data.getData();
                 Cursor cursor = getContentResolver().query(uri, null, null, null, null);
-                cursor.moveToFirst();
+                if(cursor != null)
+                    cursor.moveToFirst();
 
                 int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
                 currentPhotoStr = cursor.getString(idx);
@@ -383,6 +399,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             resizePhoto();
 
             photo.setImageBitmap(photoImage);
+        }
+        if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_CANCELED){
+            Log.i("CAPTURE", "Failed");
+            currentPhotoStr = null;
         }
 
         super.onActivityResult(requestCode, resultCode, data);
@@ -604,6 +624,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 else {
                     Toast.makeText(MainActivity.this, getString(R.string.needCameraPermission), Toast.LENGTH_SHORT).show();
+                }
+                break;
+
+            case PERMISSION_READ_WRITE_REQUEST_CODE:
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    // all good, do nothing
+                }
+                else {
+                    Toast.makeText(MainActivity.this, getString(R.string.needReadWritePermission), Toast.LENGTH_SHORT).show();
                 }
                 break;
         }

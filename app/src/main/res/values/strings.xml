@@ -24,7 +24,9 @@
     <string name="somethingHappened">Something Happened</string>
     <string name="underConstruction">Under Construction</string>
     <string name="noCameraPermission">Does not have permission to access camera</string>
+    <string name="noReadWritePermission">Does not have permission to access local storage</string>
     <string name="needCameraPermission">Face Detective needs permission to access your camera in order to take a photo</string>
+    <string name="needReadWritePermission">Face Detective needs permission to access your local storage</string>
 
     <!--<string name="server_uri">http://api.us.faceplusplus.com/</string>-->
 

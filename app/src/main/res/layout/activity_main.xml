@@ -1,5 +1,6 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    xmlns:ring="http://schemas.android.com/apk/res-auto"
     android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
@@ -11,7 +12,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@+id/detect"
+        android:layout_alignParentStart="true"
         android:layout_alignParentLeft="true"
+        android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
         android:src="@drawable/default_image"/>
@@ -21,8 +24,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/getImageButtonText"
+        android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
+        android:layout_marginEnd="10dp"
         android:layout_marginRight="10dp"/>
 
     <ImageButton
@@ -35,19 +40,6 @@
         android:layout_alignBottom="@+id/getImage"
         android:layout_marginBottom="-5dp" />
 
-    <!--<TextView-->
-        <!--android:id="@+id/count"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:text="N/A"-->
-        <!--android:layout_alignParentBottom="true"-->
-        <!--android:layout_alignParentLeft="true"-->
-        <!--android:textSize="28dp"-->
-        <!--android:layout_marginLeft="10dp"-->
-        <!--android:layout_marginBottom="5dp"-->
-        <!--android:layout_alignBottom="@+id/getImage"-->
-        <!--android:gravity="center"/>-->
-
     <FrameLayout
         android:id="@+id/waiting"
         android:layout_width="match_parent"
@@ -59,6 +51,7 @@
             android:id="@+id/ageAndGender"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:drawableStart="@drawable/male"
             android:drawableLeft="@drawable/male"
             android:background="@drawable/hint"
             android:visibility="invisible"
@@ -76,8 +69,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/saveImageButtonText"
+        android:layout_alignParentStart="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentBottom="true"
+        android:layout_marginStart="5dp"
         android:layout_marginLeft="5dp"/>
 
     <ProgressBar
@@ -86,16 +81,5 @@
         android:layout_height="wrap_content"
         android:visibility="invisible"
         android:layout_centerInParent="true" />
-
-    <!--长条形，失败作，再研究-->
-    <!--<ProgressBar-->
-        <!--android:id="@+id/ring"-->
-        <!--style="?android:attr/progressBarStyleHorizontal"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:visibility="invisible"-->
-        <!--android:layout_alignParentBottom="true"-->
-        <!--android:layout_marginBottom="-10dp"-->
-        <!--android:indeterminate="true"/>-->
 
 </RelativeLayout>
