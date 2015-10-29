@@ -549,10 +549,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         TextView ageAndGender = (TextView)waiting.findViewById(R.id.ageAndGender);
         ageAndGender.setText(age + "");
         if (isMale){
-            ageAndGender.setCompoundDrawablesWithIntrinsicBounds(getResources().getDrawable(R.drawable.male), null, null, null);           // 左上右下
+            ageAndGender.setCompoundDrawablesWithIntrinsicBounds(ContextCompat.getDrawable(this, R.drawable.male), null, null, null);           // 左上右下
         }
         else {
-            ageAndGender.setCompoundDrawablesWithIntrinsicBounds(getResources().getDrawable(R.drawable.female), null, null, null);
+            ageAndGender.setCompoundDrawablesWithIntrinsicBounds(ContextCompat.getDrawable(this, R.drawable.female), null, null, null);
         }
         ageAndGender.setDrawingCacheEnabled(true);
 
