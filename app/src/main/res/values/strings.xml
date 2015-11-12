@@ -11,7 +11,7 @@
     <!--Title Bar text-->
     <string name="selectImage">Image Selection</string>
     <string name="imageSelected">Image Selected</string>
-    <string name="detecting">Detecting...</string>
+    <string name="detecting">Detecting…</string>
 
     <!--Toast-->
     <string name="noPhotoSelected">Please select a photo</string>
@@ -32,11 +32,6 @@
 
     <!--Action Bar Icons-->
     <string name="actionCamera">Capture Photo</string>
-    <string name="actionShareFacebook">Share in Facebook</string>
-    <string name="actionShareTwitter">Tweet about it</string>
-    <string name="actionShareGPlus">Share on Google+</string>
-    <string name="actionShareWeibo">Share in Weibo</string>
-    <string name="actionShareWechat">Post in Moments</string>
     <string name="actionShare">Share</string>
 
     <!--API-->
@@ -44,6 +39,5 @@
 
     <!--Sharing-->
     <string name="sharing_content">Check out how old I look in "Face-Detective"!</string>
-    <string name="title_activity_maps">Map</string>
 
 </resources>

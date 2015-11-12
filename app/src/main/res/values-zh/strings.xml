@@ -2,8 +2,6 @@
 <resources>
     <string name="app_name">年龄检测仪</string>
     <string name="action_settings">设置</string>
-    <string name="detectWithArrow">检测--></string>
-    <string name="detecting">检测中...</string>
     <string name="detextButtonText">检测</string>
     <string name="getImageButtonText">获取照片</string>
     <string name="imageSelected">已选择的照片</string>
@@ -15,10 +13,6 @@
     <string name="unknownException">位置错误</string>
     <string name="foundException">发现异常</string>
     <string name="actionCamera">拍摄照片</string>
-    <string name="actionShareFacebook">分享到Facebook</string>
-    <string name="actionShareTwitter">分享到Twitter</string>
-    <string name="actionShareWechat">在朋友圈发布</string>
-    <string name="actionShareWeibo">分享到微博</string>
     <string name="facebook_app_id">912125312196241</string>
     <string name="pressAgainExit">再按一次退出</string>
     <string name="somethingHappened">发生了一些事情</string>
@@ -28,4 +22,7 @@
     <string name="needCameraPermission">年龄检测仪需要获取相机的权限来打开照相功能</string>
     <string name="noCameraPermission">没有足够的权限使用相机</string>
     <string name="noReadWritePermission">没有读写本地图片的权限</string>
+    <string name="actionShare">分享</string>
+    <string name="detecting">检测中...</string>
+    <string name="needReadWritePermission">年龄检测仪需要获取读写本地照片的权限</string>
 </resources>
