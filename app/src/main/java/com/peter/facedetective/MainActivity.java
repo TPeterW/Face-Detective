@@ -14,24 +14,30 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Message;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.ShareActionProvider;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
 import com.facepp.error.FaceppParseException;
 import com.facepp.result.FaceppResult;
 import com.google.android.gms.analytics.HitBuilders;
@@ -66,13 +72,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ImageButton detect;
     private Button getImage;
     private ImageView photo;
-//    private TextView count;
+
     private FrameLayout waiting;
     private ProgressBar ring;
     private Button saveImage;
 
     private String currentPhotoStr;
-//    private String lastPhotoStr;
     private boolean hasAnalysedPhoto;
 
     private Bitmap photoImage;          // current
@@ -91,7 +96,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private Tracker mTracker;
 
-    //TODO: change the order of create image and take picture
+    private RelativeLayout relativeLayout;
+    private ShareActionProvider shareActionProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         initView();
+
         initEvent();
 
         //确认暂时还没有照片可以保存
@@ -114,26 +121,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Twitter Sharing
         TwitterAuthConfig authConfig =  new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
-        Fabric.with(this, new TweetComposer(), new Twitter(authConfig));
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.i("TAG", "Setting screen name: ");
-        mTracker.setScreenName("MainScreen");
-        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
-
-    private void initEvent() {
-        getImage.setOnClickListener(this);
-        detect.setOnClickListener(this);
-        saveImage.setOnClickListener(this);
+        Fabric.with(this, new TweetComposer(), new Twitter(authConfig), new Crashlytics());
     }
 
     private void initView() {
@@ -143,12 +131,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         waiting = (FrameLayout)findViewById(R.id.waiting);
         saveImage = (Button)findViewById(R.id.saveImage);
         ring = (ProgressBar)findViewById(R.id.ring);
+
+        relativeLayout = (RelativeLayout) findViewById(R.id.layout);
+    }
+
+    private void initEvent() {
+        getImage.setOnClickListener(this);
+        detect.setOnClickListener(this);
+        saveImage.setOnClickListener(this);
+
+        AlphaAnimation animation = new AlphaAnimation(0.0f, 1.0f);
+        animation.setFillAfter(true);
+        animation.setDuration(1800);
+        relativeLayout.startAnimation(animation);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main_activity_action_bar, menu);
+        getMenuInflater().inflate(R.menu.menu_main_activity, menu);
+
+        MenuItem item = menu.findItem(R.id.action_share);
+
+        shareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
 
         return super.onCreateOptionsMenu(menu);
     }
@@ -159,11 +164,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        switch (id){
+        switch (id) {
             case R.id.action_camera:
                 if(Build.VERSION.SDK_INT >= 23){
                     int cameraPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
-                    if (cameraPermission == PackageManager.PERMISSION_DENIED){
+                    if (cameraPermission == PackageManager.PERMISSION_DENIED) {
                         Toast.makeText(MainActivity.this, getString(R.string.noCameraPermission), Toast.LENGTH_SHORT).show();
                         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISSION_CAMERA_REQUEST_CODE);
                         break;
@@ -172,8 +177,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 try{
                     takePhoto();
-                }
-                catch (Exception e){
+                } catch (Exception e){
                     // do nothing
                 }
 //                Toast.makeText(this, "Capture Photo", Toast.LENGTH_SHORT).show();
@@ -184,7 +188,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 return true;
 
-            case R.id.action_share_twitter:
+            case R.id.action_share:
                 if(hasAnalysedPhoto) {
                     File fileToShare = new File(currentPhotoStr);
                     OutputStream os = null;
@@ -196,18 +200,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Bitmap bitmap = photoImage;
                     bitmap.compress(Bitmap.CompressFormat.PNG, 0, os);
                     try {
+                        assert os != null;
                         os.close();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
 
                     Uri imageUri = Uri.fromFile(fileToShare);
-                    TweetComposer.Builder builder = new TweetComposer.Builder(this)
-                            .text(getResources().getString(R.string.twitter_sharing))
-                            .image(imageUri);
-                    builder.show();
-                }
-                else {
+                    Intent shareIntent = new Intent(Intent.ACTION_SEND).setType("image/*");
+                    shareIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
+                    shareIntent.putExtra(Intent.EXTRA_TEXT, getString(R.string.sharing_content));
+
+                    if (shareActionProvider != null)
+                        shareActionProvider.setShareIntent(shareIntent);
+
+                    startActivity(shareIntent);
+                } else {
                     Toast.makeText(MainActivity.this, R.string.noAvailablePhotoToShare, Toast.LENGTH_SHORT).show();
                 }
                 break;
@@ -379,6 +387,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if(cursor != null)
                     cursor.moveToFirst();
 
+                assert cursor != null;
                 int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
                 currentPhotoStr = cursor.getString(idx);
                 cursor.close();
@@ -538,7 +547,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 setTitle(R.string.app_name);
             }
         }
-        catch (Exception e){
+        catch (Exception ignored){
 
         }
 
@@ -616,27 +625,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode){
             case PERMISSION_CAMERA_REQUEST_CODE:
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // all good, do nothing
-                }
-                else {
+                } else {
                     Toast.makeText(MainActivity.this, getString(R.string.needCameraPermission), Toast.LENGTH_SHORT).show();
                 }
                 break;
 
             case PERMISSION_READ_WRITE_REQUEST_CODE:
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // all good, do nothing
-                }
-                else {
+                } else {
                     Toast.makeText(MainActivity.this, getString(R.string.needReadWritePermission), Toast.LENGTH_SHORT).show();
                 }
                 break;
         }
 
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.i("TAG", "Setting screen name: ");
+        mTracker.setScreenName("MainScreen");
+        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
     }
 }
