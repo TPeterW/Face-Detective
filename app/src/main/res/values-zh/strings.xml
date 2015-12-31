@@ -25,4 +25,6 @@
     <string name="actionShare">分享</string>
     <string name="detecting">检测中...</string>
     <string name="needReadWritePermission">年龄检测仪需要获取读写本地照片的权限</string>
+    <string name="ga_trackingId">UA-67131314-1</string>
+    <string name="gcm_defaultSenderId">384603555761</string>
 </resources>

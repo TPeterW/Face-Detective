@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         initEvent();
 
-        //确认暂时还没有照片可以保存
+        // 确认暂时还没有照片可以保存
         hasAnalysedPhoto = false;
 
         paint = new Paint();
