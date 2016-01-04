@@ -40,13 +40,9 @@ import android.widget.Toast;
 import com.crashlytics.android.Crashlytics;
 import com.facepp.error.FaceppParseException;
 import com.facepp.result.FaceppResult;
-import com.google.android.gms.analytics.HitBuilders;
-import com.google.android.gms.analytics.Tracker;
 
-import com.peter.facedetective.utils.AnalyticsApplication;
-import com.twitter.sdk.android.Twitter;
-import com.twitter.sdk.android.core.TwitterAuthConfig;
-import com.twitter.sdk.android.tweetcomposer.TweetComposer;
+//import com.twitter.sdk.android.Twitter;
+//import com.twitter.sdk.android.core.TwitterAuthConfig;
 
 import io.fabric.sdk.android.Fabric;
 import org.json.JSONArray;
@@ -62,11 +58,9 @@ import java.util.*;
 import java.text.SimpleDateFormat;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    // TODO: check other permission
-
-    // Note: Your consumer key and secret should be obfuscated in your source code before shipping.
-    private static final String TWITTER_KEY = "teGWfhaat5woIR9ZqqOTELPXX";
-    private static final String TWITTER_SECRET = "Cz5bMeSfmDAsjvdSnnkHmHM4d5OdwOqb2gkcr6pbFxeIgrvCzI";
+    // Note: Consumer key and secret should be obfuscated in your source code before shipping.
+//    private static final String TWITTER_KEY = "teGWfhaat5woIR9ZqqOTELPXX";
+//    private static final String TWITTER_SECRET = "Cz5bMeSfmDAsjvdSnnkHmHM4d5OdwOqb2gkcr6pbFxeIgrvCzI";
 
     private static final int PICK_CODE = 5221;
     private ImageButton detect;
@@ -81,20 +75,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private boolean hasAnalysedPhoto;
 
     private Bitmap photoImage;          // current
-    private Bitmap editedImage;         // edited
     private Paint paint;
-
-    // for capturing image
-    private Uri preinsertedUri;
-    private File photoFile;
 
     private long lastPressedTime;
 
     static final int REQUEST_TAKE_PHOTO = 1;
     static final int PERMISSION_CAMERA_REQUEST_CODE = 101;
     static final int PERMISSION_READ_WRITE_REQUEST_CODE = 102;
-
-    private Tracker mTracker;
 
     private RelativeLayout relativeLayout;
     private ShareActionProvider shareActionProvider;
@@ -115,13 +102,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setTitle(R.string.app_name);
         lastPressedTime = System.currentTimeMillis() - 2000;
 
-        // Google Analytics
-        AnalyticsApplication application = (AnalyticsApplication) getApplication();
-        mTracker = application.getDefaultTracker();
-
         // Twitter Sharing
-        TwitterAuthConfig authConfig =  new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
-        Fabric.with(this, new TweetComposer(), new Twitter(authConfig), new Crashlytics());
+//        TwitterAuthConfig authConfig =  new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
+        Fabric.with(this, /*new Twitter(authConfig),*/ new Crashlytics());
     }
 
     private void initView() {
@@ -166,7 +149,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int id = item.getItemId();
         switch (id) {
             case R.id.action_camera:
-                if(Build.VERSION.SDK_INT >= 23){
+
+                if (Build.VERSION.SDK_INT >= 23) {
                     int cameraPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
                     if (cameraPermission == PackageManager.PERMISSION_DENIED) {
                         Toast.makeText(MainActivity.this, getString(R.string.noCameraPermission), Toast.LENGTH_SHORT).show();
@@ -175,21 +159,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 }
 
-                try{
+                try {
                     takePhoto();
                 } catch (Exception e){
                     // do nothing
                 }
-//                Toast.makeText(this, "Capture Photo", Toast.LENGTH_SHORT).show();
-                mTracker.send(new HitBuilders.EventBuilder()
-                .setCategory("Action")
-                .setAction("Take Photo")
-                .build());
 
                 return true;
 
             case R.id.action_share:
-                if(hasAnalysedPhoto) {
+                if (hasAnalysedPhoto) {
                     File fileToShare = new File(currentPhotoStr);
                     OutputStream os = null;
                     try {
@@ -224,26 +203,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return super.onOptionsItemSelected(item);
     }
 
-    private void takePhoto() throws IOException{
+    private void takePhoto() throws IOException {
         Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         // ensure that there is a camera activity to handle the intent
-        if(takePicture.resolveActivity(getPackageManager()) != null){
-            photoFile = null;
+        if (takePicture.resolveActivity(getPackageManager()) != null) {
+            File photoFile = null;
             try {
                 photoFile = createImageFile();
-            }
-            catch (IOException e){
+            } catch (IOException e) {
                 Toast.makeText(this, R.string.somethingHappened, Toast.LENGTH_SHORT).show();
             }
 
             // continue if successfully created
-            if(photoFile != null){
+            if (photoFile != null) {
                 // TODO: save photo to gallery first
                 takePicture.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
                 startActivityForResult(takePicture, REQUEST_TAKE_PHOTO);
             }
         }
-
     }
 
     private File createImageFile() throws IOException {
@@ -269,9 +246,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()){
             case R.id.saveImage:
             case R.id.getImage:
-                if(Build.VERSION.SDK_INT >= 23){
+                if (Build.VERSION.SDK_INT >= 23) {
                     int readWritePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                    if (readWritePermission == PackageManager.PERMISSION_DENIED){
+                    if (readWritePermission == PackageManager.PERMISSION_DENIED) {
                         Toast.makeText(MainActivity.this, getString(R.string.noReadWritePermission), Toast.LENGTH_SHORT).show();
                         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_READ_WRITE_REQUEST_CODE);
                         return;
@@ -280,18 +257,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
 
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.saveImage:
                 if (!hasAnalysedPhoto)
                     Toast.makeText(this, R.string.noAvailablePhotoToSave, Toast.LENGTH_SHORT).show();
                 else {
                     saveImageToGallery(MainActivity.this);
                 }
-
-                mTracker.send(new HitBuilders.EventBuilder()
-                        .setCategory("Action")
-                        .setAction("Save Photo")
-                        .build());
 
                 break;
 
@@ -302,28 +274,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivityForResult(intent, PICK_CODE);
 //                setTitle("Detect Faces");
 
-                mTracker.send(new HitBuilders.EventBuilder()
-                        .setCategory("Action")
-                        .setAction("Pick Photo From Gallery")
-                        .build());
                 break;
 
             case R.id.detect:
-                if(currentPhotoStr != null && !currentPhotoStr.trim().equals("")){
+                if (currentPhotoStr != null && !currentPhotoStr.trim().equals("")) {
                     setTitle(R.string.detecting);
                     waiting.setVisibility(View.VISIBLE);
                     ring.setVisibility(View.VISIBLE);
-                }
-                else {
+                } else {
                     Toast.makeText(this, R.string.noPhotoSelected, Toast.LENGTH_SHORT).show();
 //                    writeHashKey();
                     break;
                 }
-
-                mTracker.send(new HitBuilders.EventBuilder()
-                        .setCategory("Action")
-                        .setAction("Detect Photo")
-                        .build());
 
                 resizePhoto();
 
@@ -351,7 +313,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void saveImageToGallery(Context context){
+    private void saveImageToGallery(Context context) {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "FACEDET_" + timeStamp;
         Log.i("TAG", imageFileName);
@@ -380,8 +342,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(requestCode == PICK_CODE){
-            if (data != null){
+        if (requestCode == PICK_CODE) {
+            if (data != null) {
                 Uri uri = data.getData();
                 Cursor cursor = getContentResolver().query(uri, null, null, null, null);
                 if(cursor != null)
@@ -399,7 +361,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
 
-        if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK){
+        if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
 //            Bundle extras = data.getExtras();
 //            Bitmap imageBitmap = (Bitmap) extras.get("data");
 //            photo.setImageBitmap(imageBitmap);
@@ -409,7 +371,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             photo.setImageBitmap(photoImage);
         }
-        if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_CANCELED){
+        if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_CANCELED) {
             Log.i("CAPTURE", "Failed");
             currentPhotoStr = null;
         }
@@ -418,7 +380,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     // 压缩图片，防止过大
-    private void resizePhoto(){
+    private void resizePhoto() {
         BitmapFactory.Options option = new BitmapFactory.Options();
         option.inJustDecodeBounds = true;
 
@@ -436,43 +398,42 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int MSG_SUCCESS = 0x111;
     private static final int MSG_ERROR = 0x112;
 
-        android.os.Handler handler = new android.os.Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                switch (msg.what) {
-                    case MSG_SUCCESS:
-                        waiting.setVisibility(View.INVISIBLE);           // INVISIBLE 还是 GONE 要注意
-                        ring.setVisibility(View.INVISIBLE);
+    android.os.Handler handler = new android.os.Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_SUCCESS:
+                    waiting.setVisibility(View.INVISIBLE);           // INVISIBLE 还是 GONE 要注意
+                    ring.setVisibility(View.INVISIBLE);
 //                    count.setVisibility(View.VISIBLE);
-                        FaceppResult result = (FaceppResult) msg.obj;
+                    FaceppResult result = (FaceppResult) msg.obj;
 
-                        // 解析JsonObject，绘制脸部框
-                        prepareResultBitmap(result);
+                    // 解析JsonObject，绘制脸部框
+                    prepareResultBitmap(result);
 
-                        photo.setImageBitmap(photoImage);
-                        editedImage = photoImage;                   // 将加了框的图像传入“已修改图像中”
+                    photo.setImageBitmap(photoImage);
 
-                        break;
+                    break;
 
-                    case MSG_ERROR:
-                        waiting.setVisibility(View.GONE);
-                        ring.setVisibility(View.INVISIBLE);
+                case MSG_ERROR:
+                    waiting.setVisibility(View.GONE);
+                    ring.setVisibility(View.INVISIBLE);
 //                    count.setVisibility(View.VISIBLE);
-                        String errorMsg = msg.obj.toString();
+                    String errorMsg = msg.obj.toString();
 
-                        if (TextUtils.isEmpty(errorMsg)) {
-                            Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
+                    if (TextUtils.isEmpty(errorMsg)) {
+                        Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
 //                        count.setText("Error");
-                        } else {
-                            Toast.makeText(MainActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(MainActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
 //                        count.setText(errorMsg);
-                        }
+                    }
 
-                        break;
-                }
-                super.handleMessage(msg);
+                    break;
             }
-        };
+            super.handleMessage(msg);
+        }
+    };
 
     private void prepareResultBitmap(FaceppResult result) {
         // 根据原图创建一个新的空画板
@@ -482,7 +443,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //将原图画入
         canvas.drawBitmap(photoImage, 0, 0, null);
 
-        try{
+        try {
             // 转换成JSONObject
             JSONObject rs = new JSONObject(result.toString());
             JSONArray faces = rs.getJSONArray("face");
@@ -492,7 +453,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             int faceCount = faces.length();
 //            count.setText("No: " + faceCount);
 
-            for(int i = 0; i < faceCount; i++){
+            for (int i = 0; i < faceCount; i++) {
                 // 拿到单独的face对象
                 JSONObject face = faces.getJSONObject(i);
                 JSONObject posObj = face.getJSONObject("position");
@@ -534,7 +495,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 int ageWidth = ageBitmap.getWidth();
                 int ageHeight = ageBitmap.getHeight();
 
-                if(bitmap.getWidth() < photoImage.getWidth() && bitmap.getHeight() < photoImage.getHeight()){
+                if (bitmap.getWidth() < photoImage.getWidth() && bitmap.getHeight() < photoImage.getHeight()) {
                     float ratio = Math.max(bitmap.getWidth() * 1.0f / photo.getWidth(), bitmap.getHeight() * 1.0f / photo.getHeight());
                     ageBitmap = Bitmap.createScaledBitmap(ageBitmap, (int)(ageWidth * ratio), (int)(ageHeight * ratio), false);
                 }
@@ -546,9 +507,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 setTitle(R.string.app_name);
             }
-        }
-        catch (Exception ignored){
-
+        } catch (Exception ignored) {
+            // ignore exception
         }
 
     }
@@ -556,7 +516,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Bitmap buildAgeBitmap(int age, boolean isMale) {
 //        TextView ageAndGender = (TextView)findViewById(R.id.ageAndGender);
         TextView ageAndGender = (TextView)waiting.findViewById(R.id.ageAndGender);
-        ageAndGender.setText(age + "");
+        ageAndGender.setText(Integer.toString(age));
         if (isMale){
             ageAndGender.setCompoundDrawablesWithIntrinsicBounds(ContextCompat.getDrawable(this, R.drawable.male), null, null, null);           // 左上右下
         }
@@ -626,7 +586,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode){
+        switch (requestCode) {
             case PERMISSION_CAMERA_REQUEST_CODE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // all good, do nothing
@@ -651,7 +611,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onResume() {
         super.onResume();
         Log.i("TAG", "Setting screen name: ");
-        mTracker.setScreenName("MainScreen");
-        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
     }
 }

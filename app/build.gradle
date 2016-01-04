@@ -19,8 +19,8 @@ android {
         applicationId "com.peter.facedetective"
         minSdkVersion 14
         targetSdkVersion 23
-        versionCode 8
-        versionName '1.2.2.1'
+        versionCode 9
+        versionName '1.2.2.2'
     }
     buildTypes {
         release {
@@ -43,14 +43,10 @@ repositories {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile('com.twitter.sdk.android:tweet-composer:0.9.0@aar') {
-        transitive = true;
-    }
-    compile('com.twitter.sdk.android:twitter:1.11.0@aar') {
-        transitive = true;
-    }
+//    compile('com.twitter.sdk.android:twitter:1.11.0@aar') {
+//        transitive = true;
+//    }
     compile 'com.android.support:appcompat-v7:23.1.1'
-    compile 'com.google.android.gms:play-services:8.4.0'
     compile('com.crashlytics.sdk.android:crashlytics:2.5.5@aar') {
         transitive = true;
     }

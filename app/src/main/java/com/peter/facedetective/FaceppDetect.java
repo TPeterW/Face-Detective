@@ -10,7 +10,6 @@ import com.facepp.error.FaceppParseException;
 import com.facepp.http.HttpRequests;
 import com.facepp.http.PostParameters;
 import com.facepp.result.FaceppResult;
-import com.peter.facedetective.utils.Constant;
 
 import java.io.ByteArrayOutputStream;
 
@@ -19,6 +18,10 @@ import java.io.ByteArrayOutputStream;
  *
  */
 public class FaceppDetect {
+
+    private static final String FACEPP_KEY = "70109ce8b5d3ad5fb398beeebf618dbc";
+    private static final String FACEPP_SECRET = "KRyFl11nFFBKDrN4yE6Go5bBWCY-vCme";
+
     public interface Callback{
         void success(FaceppResult result);
 
@@ -26,14 +29,14 @@ public class FaceppDetect {
 
     }
 
-    public static void detect(final Bitmap bm, final Callback callback, final Context context){
+    public static void detect(final Bitmap bm, final Callback callback, final Context context) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 Looper.prepare();
-                try{
+                try {
                     // 创建请求
-                    HttpRequests requests = new HttpRequests(Constant.KEY, Constant.SECRET, true);    // 不行就改成false
+                    HttpRequests requests = new HttpRequests(FACEPP_KEY, FACEPP_SECRET, true);    // 不行就改成false
 
                     Bitmap bmSmall = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight());
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -49,18 +52,17 @@ public class FaceppDetect {
 //                    Log.i("TAG", "This is to see whether it works or not");
                     Log.i("TAG", jsonObject.toString());
 
-                    if(callback != null){
+                    if (callback != null) {
                         callback.success(jsonObject);
                     }
-                }
-                catch (FaceppParseException e){
+                } catch (FaceppParseException e) {
                     e.printStackTrace();
-                    if(callback == null){
+                    if (callback == null) {
                         callback.error(e);
                     }
 
                     Toast.makeText(context, R.string.foundException, Toast.LENGTH_SHORT).show();
-                } catch (Exception e){
+                } catch (Exception e) {
                     Toast.makeText(context, R.string.unknownException, Toast.LENGTH_SHORT).show();
                 }
 
