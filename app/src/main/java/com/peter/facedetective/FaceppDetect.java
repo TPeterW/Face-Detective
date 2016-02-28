@@ -47,8 +47,7 @@ public class FaceppDetect {
                     PostParameters params = new PostParameters();
                     params.setImg(arrays);
                     FaceppResult jsonObject = requests.detectionDetect(params);
-
-                    //
+                    
 //                    Log.i("TAG", "This is to see whether it works or not");
                     Log.i("TAG", jsonObject.toString());
 
