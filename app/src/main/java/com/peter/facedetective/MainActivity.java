@@ -277,13 +277,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.detect:
+                // TODO: check internet connection
+
                 if (currentPhotoStr != null && !currentPhotoStr.trim().equals("")) {
                     setTitle(R.string.detecting);
                     waiting.setVisibility(View.VISIBLE);
                     ring.setVisibility(View.VISIBLE);
                 } else {
                     Toast.makeText(this, R.string.noPhotoSelected, Toast.LENGTH_SHORT).show();
-//                    writeHashKey();
                     break;
                 }
 
