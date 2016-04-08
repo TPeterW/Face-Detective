@@ -6,7 +6,7 @@
     <!--Controls text-->
     <string name="getImageButtonText">Get Image</string>
     <string name="saveImageButtonText">Save Image</string>
-    <string name="detextButtonText">Detect</string>
+    <string name="detectButtonText">Detect</string>
 
     <!--Title Bar text-->
     <string name="selectImage">Image Selection</string>
@@ -14,6 +14,7 @@
     <string name="detecting">Detecting…</string>
 
     <!--Toast-->
+    <string name="noInternetConnection">Cannot connect to network</string>
     <string name="noPhotoSelected">Please select a photo</string>
     <string name="noAvailablePhotoToSave">No photo available to save</string>
     <string name="noAvailablePhotoToShare">No photo available to share</string>
@@ -23,8 +24,10 @@
     <string name="pressAgainExit">Press again and exit</string>
     <string name="somethingHappened">Something Happened</string>
     <string name="underConstruction">Under Construction</string>
+    <string name="noNetworkPermission">Does not have permission to access network state</string>
     <string name="noCameraPermission">Does not have permission to access camera</string>
     <string name="noReadWritePermission">Does not have permission to access local storage</string>
+    <string name="needNetworkPermission">Face Detective needs permission to access your network state</string>
     <string name="needCameraPermission">Face Detective needs permission to access your camera in order to take a photo</string>
     <string name="needReadWritePermission">Face Detective needs permission to access your local storage</string>
 
@@ -35,7 +38,7 @@
     <string name="actionShare">Share</string>
 
     <!--API-->
-    <string name="facebook_app_id">912125312196241</string>
+    <string name="facebook_app_id" translatable="false">912125312196241</string>
 
     <!--Sharing-->
     <string name="sharing_content">Check out how old I look in "Face-Detective"!</string>

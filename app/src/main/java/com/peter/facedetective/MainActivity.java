@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -79,9 +80,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private long lastPressedTime;
 
-    static final int REQUEST_TAKE_PHOTO = 1;
-    static final int PERMISSION_CAMERA_REQUEST_CODE = 101;
-    static final int PERMISSION_READ_WRITE_REQUEST_CODE = 102;
+    static final int REQUEST_TAKE_PHOTO                         = 1;
+    static final int PERMISSION_CAMERA_REQUEST_CODE             = 101;
+    static final int PERMISSION_READ_WRITE_REQUEST_CODE         = 102;
+    static final int PERMISSION_NETWORK_STATE_REQUEST_CODE = 103;
 
     private RelativeLayout relativeLayout;
     private ShareActionProvider shareActionProvider;
@@ -277,7 +279,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.detect:
-                // TODO: check internet connection
+                if (!isNetworkConnected()) {        // no internet
+                    Toast.makeText(MainActivity.this, getString(R.string.noInternetConnection), Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
                 if (currentPhotoStr != null && !currentPhotoStr.trim().equals("")) {
                     setTitle(R.string.detecting);
@@ -317,13 +322,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void saveImageToGallery(Context context) {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "FACEDET_" + timeStamp;
-        Log.i("TAG", imageFileName);
+        Log.i("IMAGE", imageFileName);
 
         /*
         方法一
          */
 //        File sd = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-//        Log.i("TAG", sd.toString());
+//        Log.i("IMAGE", sd.toString());
 //
 //        Intent saveImage = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
 //        File outputImage = new File(currentPhotoStr);
@@ -542,30 +547,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return bitmap;
     }
 
-    /*
-    Hash key (for Facebook Plug-in)
-     */
-//    private void writeHashKey(){
-//        PackageInfo info;
-//        try {
-//            info = getPackageManager().getPackageInfo("com.peter.facedetective", PackageManager.GET_SIGNATURES);
-//            for (Signature signature : info.signatures) {
-//                MessageDigest md;
-//                md = MessageDigest.getInstance("SHA");
-//                md.update(signature.toByteArray());
-//                String something = new String(Base64.encode(md.digest(), 0));
-//                //String something = new String(Base64.encodeBytes(md.digest()));
-//                Log.i("TAG", something);
-//            }
-//        } catch (PackageManager.NameNotFoundException e1) {
-//            Log.e("name not found", e1.toString());
-//        } catch (NoSuchAlgorithmException e) {
-//            Log.e("no such an algorithm", e.toString());
-//        } catch (Exception e) {
-//            Log.e("exception", e.toString());
-//        }
-//    }
-
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         long currentPressedTime = System.currentTimeMillis();
@@ -585,23 +566,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        return super.onKeyDown(keyCode, event);
     }
 
+    /***
+     * Checks if connected to internet
+     * @return
+     */
+    private boolean isNetworkConnected() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+
+        return connectivityManager.getActiveNetworkInfo() != null;
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
             case PERMISSION_CAMERA_REQUEST_CODE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // all good, do nothing
-                } else {
+                } else
                     Toast.makeText(MainActivity.this, getString(R.string.needCameraPermission), Toast.LENGTH_SHORT).show();
-                }
                 break;
 
             case PERMISSION_READ_WRITE_REQUEST_CODE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // all good, do nothing
-                } else {
+                } else
                     Toast.makeText(MainActivity.this, getString(R.string.needReadWritePermission), Toast.LENGTH_SHORT).show();
-                }
+                break;
+
+            case PERMISSION_NETWORK_STATE_REQUEST_CODE:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // all good, do nothing
+                } else
+                    Toast.makeText(MainActivity.this, getString(R.string.needNetworkPermission), Toast.LENGTH_SHORT).show();
                 break;
         }
 
@@ -611,6 +607,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
-        Log.i("TAG", "Setting screen name: ");
+        Log.i("IMAGE", "Setting screen name: ");
     }
 }
