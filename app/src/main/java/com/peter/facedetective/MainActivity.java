@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     static final int REQUEST_TAKE_PHOTO                         = 1;
     static final int PERMISSION_CAMERA_REQUEST_CODE             = 101;
     static final int PERMISSION_READ_WRITE_REQUEST_CODE         = 102;
-    static final int PERMISSION_NETWORK_STATE_REQUEST_CODE = 103;
+    static final int PERMISSION_NETWORK_STATE_REQUEST_CODE      = 103;
 
     private RelativeLayout relativeLayout;
     private ShareActionProvider shareActionProvider;
