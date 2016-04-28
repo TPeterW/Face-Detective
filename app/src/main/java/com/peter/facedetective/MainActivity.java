@@ -59,9 +59,6 @@ import java.util.*;
 import java.text.SimpleDateFormat;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    // Note: Consumer key and secret should be obfuscated in your source code before shipping.
-//    private static final String TWITTER_KEY = "teGWfhaat5woIR9ZqqOTELPXX";
-//    private static final String TWITTER_SECRET = "Cz5bMeSfmDAsjvdSnnkHmHM4d5OdwOqb2gkcr6pbFxeIgrvCzI";
 
     private static final int PICK_CODE = 5221;
     private ImageButton detect;
