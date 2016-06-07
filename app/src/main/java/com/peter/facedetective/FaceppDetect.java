@@ -13,14 +13,13 @@ import com.facepp.result.FaceppResult;
 
 import java.io.ByteArrayOutputStream;
 
+import static com.peter.facedetective.Constants.*;
+
 /**
  * Created by 韬 on 2015/8/20 0020.
  *
  */
 public class FaceppDetect {
-
-    private static final String FACEPP_KEY = "70109ce8b5d3ad5fb398beeebf618dbc";
-    private static final String FACEPP_SECRET = "KRyFl11nFFBKDrN4yE6Go5bBWCY-vCme";
 
     public interface Callback{
         void success(FaceppResult result);
