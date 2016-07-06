@@ -28,7 +28,8 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
         android:layout_marginEnd="10dp"
-        android:layout_marginRight="10dp"/>
+        android:layout_marginRight="10dp"
+        android:background="?android:attr/selectableItemBackground"/>
 
     <ImageButton
         android:id="@+id/detect"
@@ -38,7 +39,8 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_alignBottom="@+id/getImage"
-        android:layout_marginBottom="-5dp" />
+        android:layout_marginBottom="5dp"
+        android:background="?android:attr/selectableItemBackground"/>
 
     <FrameLayout
         android:id="@+id/waiting"
@@ -73,7 +75,8 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentBottom="true"
         android:layout_marginStart="5dp"
-        android:layout_marginLeft="5dp"/>
+        android:layout_marginLeft="5dp"
+        android:background="?android:attr/selectableItemBackground"/>
 
     <ProgressBar
         android:id="@+id/ring"
