@@ -37,9 +37,6 @@
     <string name="actionCamera">Capture Photo</string>
     <string name="actionShare">Share</string>
 
-    <!--API-->
-    <string name="facebook_app_id" translatable="false">912125312196241</string>
-
     <!--Sharing-->
     <string name="sharing_content">Check out how old I look in "Face-Detective"!</string>
 
