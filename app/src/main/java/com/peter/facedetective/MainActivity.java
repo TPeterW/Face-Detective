@@ -60,7 +60,7 @@ import java.text.SimpleDateFormat;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private static final int PICK_CODE = 5221;
+    private static final int PICK_CODE = 0x233;
     private ImageButton detect;
     private Button getImage;
     private ImageView photo;
@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (Build.VERSION.SDK_INT >= 23) {
                     int cameraPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
                     if (cameraPermission == PackageManager.PERMISSION_DENIED) {
-                        Toast.makeText(MainActivity.this, getString(R.string.noCameraPermission), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, getString(R.string.no_camera_permission), Toast.LENGTH_SHORT).show();
                         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISSION_CAMERA_REQUEST_CODE);
                         break;
                     }
@@ -194,7 +194,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     startActivity(shareIntent);
                 } else {
-                    Toast.makeText(MainActivity.this, R.string.noAvailablePhotoToShare, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, R.string.no_available_photo_to_share, Toast.LENGTH_SHORT).show();
                 }
                 break;
         }
@@ -210,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             try {
                 photoFile = createImageFile();
             } catch (IOException e) {
-                Toast.makeText(this, R.string.somethingHappened, Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.something_happened, Toast.LENGTH_SHORT).show();
             }
 
             // continue if successfully created
@@ -248,7 +248,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (Build.VERSION.SDK_INT >= 23) {
                     int readWritePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
                     if (readWritePermission == PackageManager.PERMISSION_DENIED) {
-                        Toast.makeText(MainActivity.this, getString(R.string.noReadWritePermission), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, getString(R.string.no_read_write_permission), Toast.LENGTH_SHORT).show();
                         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_READ_WRITE_REQUEST_CODE);
                         return;
                     }
@@ -259,7 +259,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
             case R.id.saveImage:
                 if (!hasAnalysedPhoto)
-                    Toast.makeText(this, R.string.noAvailablePhotoToSave, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, R.string.no_available_photo_to_save, Toast.LENGTH_SHORT).show();
                 else {
                     saveImageToGallery(MainActivity.this);
                 }
@@ -267,7 +267,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.getImage:
-                setTitle(R.string.selectImage);
+                setTitle(R.string.select_image);
                 Intent intent = new Intent(Intent.ACTION_PICK);
                 intent.setType("image/*");
                 startActivityForResult(intent, PICK_CODE);
@@ -277,7 +277,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.detect:
                 if (!isNetworkConnected()) {        // no internet
-                    Toast.makeText(MainActivity.this, getString(R.string.noInternetConnection), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, getString(R.string.no_internet_connection), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -286,7 +286,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     waiting.setVisibility(View.VISIBLE);
                     ring.setVisibility(View.VISIBLE);
                 } else {
-                    Toast.makeText(this, R.string.noPhotoSelected, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, R.string.no_photo_selected, Toast.LENGTH_SHORT).show();
                     break;
                 }
 
@@ -340,43 +340,53 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Bitmap forSave = photoImage;
         MediaStore.Images.Media.insertImage(context.getContentResolver(), forSave, imageFileName, timeStamp);
 
-        Toast.makeText(context, R.string.pictureIsSaved, Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, R.string.picture_is_saved, Toast.LENGTH_SHORT).show();
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == PICK_CODE) {
             if (data != null) {
+                if (resultCode == RESULT_CANCELED)
+                    return;
+
                 Uri uri = data.getData();
                 Cursor cursor = getContentResolver().query(uri, null, null, null, null);
                 if(cursor != null)
                     cursor.moveToFirst();
 
-                assert cursor != null;
-                int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
-                currentPhotoStr = cursor.getString(idx);
-                cursor.close();
+                try {
+                    assert cursor != null;
+                    int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
+                    currentPhotoStr = cursor.getString(idx);
+                    cursor.close();
 
-                resizePhoto();
+                    resizePhoto();
+                } catch (Exception e) {
+                    Crashlytics.logException(e);
+                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, getString(R.string.fail_to_read_storage), Toast.LENGTH_SHORT).show();
+                }
 
                 photo.setImageBitmap(photoImage);
-//                count.setText(R.string.detectWithArrow);
             }
         }
 
-        if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
-//            Bundle extras = data.getExtras();
-//            Bitmap imageBitmap = (Bitmap) extras.get("data");
-//            photo.setImageBitmap(imageBitmap);
+        if (requestCode == REQUEST_TAKE_PHOTO) {
+            if (resultCode == RESULT_CANCELED) {
+                Log.i("CAPTURE", "Failed");
+                currentPhotoStr = null;
+                return;
+            }
 
-            Log.i("CAPTURE", currentPhotoStr);
-            resizePhoto();
+            if (currentPhotoStr != null) {
+                Log.i("CAPTURE", currentPhotoStr);
+                resizePhoto();
+            } else {
+                Toast.makeText(MainActivity.this, getString(R.string.fail_to_capture_image), Toast.LENGTH_SHORT).show();
+            }
 
             photo.setImageBitmap(photoImage);
-        }
-        if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_CANCELED) {
-            Log.i("CAPTURE", "Failed");
-            currentPhotoStr = null;
         }
 
         super.onActivityResult(requestCode, resultCode, data);
@@ -550,7 +560,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if(keyCode == KeyEvent.KEYCODE_BACK){
             if((currentPressedTime - lastPressedTime) > 2000){
-                Toast.makeText(MainActivity.this, R.string.pressAgainExit, Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, R.string.press_again_exit, Toast.LENGTH_SHORT).show();
                 lastPressedTime = currentPressedTime;
             }
             else {
@@ -580,21 +590,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // all good, do nothing
                 } else
-                    Toast.makeText(MainActivity.this, getString(R.string.needCameraPermission), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, getString(R.string.need_camera_permission), Toast.LENGTH_SHORT).show();
                 break;
 
             case PERMISSION_READ_WRITE_REQUEST_CODE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // all good, do nothing
                 } else
-                    Toast.makeText(MainActivity.this, getString(R.string.needReadWritePermission), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, getString(R.string.need_read_write_permission), Toast.LENGTH_SHORT).show();
                 break;
 
             case PERMISSION_NETWORK_STATE_REQUEST_CODE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // all good, do nothing
                 } else
-                    Toast.makeText(MainActivity.this, getString(R.string.needNetworkPermission), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, getString(R.string.need_network_permission), Toast.LENGTH_SHORT).show();
                 break;
         }
 

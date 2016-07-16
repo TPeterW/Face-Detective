@@ -59,9 +59,9 @@ public class FaceppDetect {
                         callback.error(e);
                     }
 
-                    Toast.makeText(context, R.string.foundException, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, R.string.found_exception, Toast.LENGTH_SHORT).show();
                 } catch (Exception e) {
-                    Toast.makeText(context, R.string.unknownException, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, R.string.unknown_exception, Toast.LENGTH_SHORT).show();
                 }
 
             }

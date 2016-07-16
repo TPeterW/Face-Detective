@@ -4,38 +4,40 @@
     <string name="action_settings">Settings</string>
 
     <!--Controls text-->
-    <string name="getImageButtonText">Get Image</string>
-    <string name="saveImageButtonText">Save Image</string>
-    <string name="detectButtonText">Detect</string>
+    <string name="txt_btn_get_image">Get Image</string>
+    <string name="txt_btn_save_image">Save Image</string>
+    <string name="txt_btn_detect">Detect</string>
 
     <!--Title Bar text-->
-    <string name="selectImage">Image Selection</string>
-    <string name="imageSelected">Image Selected</string>
+    <string name="select_image">Image Selection</string>
+    <string name="image_selected">Image Selected</string>
     <string name="detecting">Detecting…</string>
 
     <!--Toast-->
-    <string name="noInternetConnection">Cannot connect to network</string>
-    <string name="noPhotoSelected">Please select a photo</string>
-    <string name="noAvailablePhotoToSave">No photo available to save</string>
-    <string name="noAvailablePhotoToShare">No photo available to share</string>
-    <string name="pictureIsSaved">Photo is saved to "Pictures" folder in your Gallery</string>
-    <string name="foundException">Exception Found</string>
-    <string name="unknownException">Unknown Exception</string>
-    <string name="pressAgainExit">Press again and exit</string>
-    <string name="somethingHappened">Something Happened</string>
-    <string name="underConstruction">Under Construction</string>
-    <string name="noNetworkPermission">Does not have permission to access network state</string>
-    <string name="noCameraPermission">Does not have permission to access camera</string>
-    <string name="noReadWritePermission">Does not have permission to access local storage</string>
-    <string name="needNetworkPermission">Face Detective needs permission to access your network state</string>
-    <string name="needCameraPermission">Face Detective needs permission to access your camera in order to take a photo</string>
-    <string name="needReadWritePermission">Face Detective needs permission to access your local storage</string>
+    <string name="no_internet_connection">Cannot connect to network</string>
+    <string name="no_photo_selected">Please select a photo</string>
+    <string name="no_available_photo_to_save">No photo available to save</string>
+    <string name="no_available_photo_to_share">No photo available to share</string>
+    <string name="picture_is_saved">Photo is saved to "Pictures" folder in your Gallery</string>
+    <string name="found_exception">Exception Found</string>
+    <string name="unknown_exception">Unknown Exception</string>
+    <string name="press_again_exit">Press again and exit</string>
+    <string name="something_happened">Something Happened</string>
+    <string name="under_construction">Under Construction</string>
+    <string name="no_network_permission">Does not have permission to access network state</string>
+    <string name="no_camera_permission">Does not have permission to access camera</string>
+    <string name="no_read_write_permission">Does not have permission to access local storage</string>
+    <string name="need_network_permission">Face Detective needs permission to access your network state</string>
+    <string name="need_camera_permission">Face Detective needs permission to access your camera in order to take a photo</string>
+    <string name="need_read_write_permission">Face Detective needs permission to access your local storage</string>
+    <string name="fail_to_capture_image">Failed to capture image</string>
+    <string name="fail_to_read_storage">Failed to read image from local storage</string>
 
     <!--<string name="server_uri">http://api.us.faceplusplus.com/</string>-->
 
     <!--Action Bar Icons-->
-    <string name="actionCamera">Capture Photo</string>
-    <string name="actionShare">Share</string>
+    <string name="action_camera">Capture Photo</string>
+    <string name="action_share">Share</string>
 
     <!--Sharing-->
     <string name="sharing_content">Check out how old I look in "Face-Detective"!</string>
