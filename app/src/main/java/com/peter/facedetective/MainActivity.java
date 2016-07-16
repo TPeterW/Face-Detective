@@ -154,7 +154,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (cameraPermission == PackageManager.PERMISSION_DENIED) {
                         Toast.makeText(MainActivity.this, getString(R.string.no_camera_permission), Toast.LENGTH_SHORT).show();
                         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISSION_CAMERA_REQUEST_CODE);
-                        break;
+                        return true;
                     }
                 }
 
@@ -175,8 +175,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     }
-                    Bitmap bitmap = photoImage;
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 0, os);
+
+                    if (photoImage != null) {
+                        Bitmap bitmap = photoImage;
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 0, os);
+                    } else {
+                        Toast.makeText(MainActivity.this, getString(R.string.unable_to_share_photo), Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+
                     try {
                         assert os != null;
                         os.close();
@@ -196,7 +203,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else {
                     Toast.makeText(MainActivity.this, R.string.no_available_photo_to_share, Toast.LENGTH_SHORT).show();
                 }
-                break;
+                return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -270,8 +277,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 setTitle(R.string.select_image);
                 Intent intent = new Intent(Intent.ACTION_PICK);
                 intent.setType("image/*");
-                startActivityForResult(intent, PICK_CODE);
-//                setTitle("Detect Faces");
+                try {
+                    startActivityForResult(intent, PICK_CODE);
+                } catch (Exception e) {
+                    Crashlytics.logException(e);
+                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, getString(R.string.no_app_to_pick_photo), Toast.LENGTH_SHORT).show();
+                }
 
                 break;
 
