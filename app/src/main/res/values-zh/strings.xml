@@ -20,11 +20,15 @@
     <string name="no_available_photo_to_share">没有可以分享的照片</string>
     <string name="need_camera_permission">年龄检测仪需要获取相机的权限来打开照相功能</string>
     <string name="no_camera_permission">没有足够的权限使用相机</string>
-    <string name="no_read_write+ermission">没有读写本地图片的权限</string>
+    <string name="no_read_write_permission">没有读写本地图片的权限</string>
     <string name="action_share">分享</string>
     <string name="detecting">检测中...</string>
     <string name="need_read_write_permission">年龄检测仪需要获取读写本地照片的权限</string>
     <string name="no_internet_connection">无法连接到网络</string>
     <string name="no_network_permission">没有获取网络状态的权限</string>
     <string name="need_network_permission">年龄检测仪需要获取网络状态的权限</string>
+    <string name="fail_to_capture_image">获取照片失败</string>
+    <string name="fail_to_read_storage">读取本地照片失败</string>
+    <string name="no_app_to_pick_photo">没有找到合适的应用</string>
+    <string name="unable_to_share_photo">无法分享照片</string>
 </resources>
