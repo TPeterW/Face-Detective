@@ -168,7 +168,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.action_share:
                 if (hasAnalysedPhoto) {
-                    File fileToShare = new File(currentPhotoStr);
+                    File fileToShare;
+                    try {
+                        fileToShare = new File(currentPhotoStr);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Toast.makeText(this, getString(R.string.photo_not_found), Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
                     OutputStream os = null;
                     try {
                         os = new BufferedOutputStream(new FileOutputStream(fileToShare));
@@ -461,6 +468,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     };
 
     private void prepareResultBitmap(FaceppResult result) {
+        if (photoImage == null)
+            return;
+
         // 根据原图创建一个新的空画板
         Bitmap bitmap = Bitmap.createBitmap(photoImage.getWidth(), photoImage.getHeight(), photoImage.getConfig());              // 此bitmap为最终的用来呈现给用户的图像
         Canvas canvas = new Canvas(bitmap);                // 把bitmap当作一幅canvas作画

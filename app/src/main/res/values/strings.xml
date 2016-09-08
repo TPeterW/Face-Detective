@@ -34,6 +34,7 @@
     <string name="fail_to_read_storage">Failed to read image from local storage</string>
     <string name="no_app_to_pick_photo">No app found on this phone to pick a photo</string>
     <string name="unable_to_share_photo">Unable to share photo</string>
+    <string name="photo_not_found">Photo not found</string>
 
     <!--<string name="server_uri">http://api.us.faceplusplus.com/</string>-->
 
