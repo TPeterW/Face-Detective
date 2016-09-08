@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">年龄检测仪</string>
-    <string name="action_settings">设置</string>
-    <string name="txt_btn_detect">检测</string>
     <string name="txt_btn_get_image">获取照片</string>
-    <string name="image_selected">已选择的照片</string>
     <string name="no_photo_selected">请选择一张照片</string>
     <string name="select_image">照片选择</string>
     <string name="txt_btn_save_image">保存图片</string>
@@ -15,7 +12,6 @@
     <string name="action_camera">拍摄照片</string>
     <string name="press_again_exit">再按一次退出</string>
     <string name="something_happened">发生了一些事情</string>
-    <string name="under_construction">此功能正在开发中</string>
     <string name="sharing_content">快来年龄检测仪显示我多大!</string>
     <string name="no_available_photo_to_share">没有可以分享的照片</string>
     <string name="need_camera_permission">年龄检测仪需要获取相机的权限来打开照相功能</string>
@@ -31,4 +27,5 @@
     <string name="fail_to_read_storage">读取本地照片失败</string>
     <string name="no_app_to_pick_photo">没有找到合适的应用</string>
     <string name="unable_to_share_photo">无法分享照片</string>
+    <string name="photo_not_found">找不到照片</string>
 </resources>

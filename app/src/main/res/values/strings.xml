@@ -1,16 +1,12 @@
 <resources>
     <string name="app_name">Face Detective</string>
 
-    <string name="action_settings">Settings</string>
-
     <!--Controls text-->
     <string name="txt_btn_get_image">Get Image</string>
     <string name="txt_btn_save_image">Save Image</string>
-    <string name="txt_btn_detect">Detect</string>
 
     <!--Title Bar text-->
     <string name="select_image">Image Selection</string>
-    <string name="image_selected">Image Selected</string>
     <string name="detecting">Detecting…</string>
 
     <!--Toast-->
@@ -23,7 +19,6 @@
     <string name="unknown_exception">Unknown Exception</string>
     <string name="press_again_exit">Press again and exit</string>
     <string name="something_happened">Something Happened</string>
-    <string name="under_construction">Under Construction</string>
     <string name="no_network_permission">Does not have permission to access network state</string>
     <string name="no_camera_permission">Does not have permission to access camera</string>
     <string name="no_read_write_permission">Does not have permission to access local storage</string>
