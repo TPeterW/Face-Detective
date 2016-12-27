@@ -35,7 +35,7 @@ public class FaceppDetect {
                 Looper.prepare();
                 try {
                     // 创建请求
-                    HttpRequests requests = new HttpRequests(FACEPP_KEY, FACEPP_SECRET, true);    // 不行就改成false
+                    HttpRequests requests = new HttpRequests(FACEPP_API_KEY, FACEPP_API_SECRET, true);    // 不行就改成false
 
                     Bitmap bmSmall = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight());
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();

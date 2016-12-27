@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -38,32 +37,39 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.NetworkResponse;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
 import com.crashlytics.android.Crashlytics;
 import com.facepp.error.FaceppParseException;
 import com.facepp.result.FaceppResult;
-
-//import com.twitter.sdk.android.Twitter;
-//import com.twitter.sdk.android.core.TwitterAuthConfig;
+import com.peter.facedetective.models.Photo;
+import com.peter.facedetective.models.VolleyMultipartRequest;
+import com.peter.facedetective.utils.FacePlusPlus;
 
 import io.fabric.sdk.android.Fabric;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.text.SimpleDateFormat;
 
+import static com.peter.facedetective.models.VolleyMultipartRequest.*;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private static final int PICK_CODE = 0x233;
     private ImageButton detect;
     private Button getImage;
-    private ImageView photo;
+    private ImageView photoView;
 
     private FrameLayout waiting;
     private ProgressBar ring;
@@ -77,13 +83,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private long lastPressedTime;
 
-    static final int REQUEST_TAKE_PHOTO                         = 1;
-    static final int PERMISSION_CAMERA_REQUEST_CODE             = 101;
-    static final int PERMISSION_READ_WRITE_REQUEST_CODE         = 102;
-    static final int PERMISSION_NETWORK_STATE_REQUEST_CODE      = 103;
+    static final int PERMISSION_CAMERA_REQUEST_CODE             = 0x101;
+    static final int PERMISSION_READ_WRITE_REQUEST_CODE         = 0x102;
+    static final int PERMISSION_NETWORK_STATE_REQUEST_CODE      = 0x103;
+
+    private static final int PICK_CODE                          = 0x233;
+    private static final int REQUEST_TAKE_PHOTO                 = 0x232;
 
     private RelativeLayout relativeLayout;
     private ShareActionProvider shareActionProvider;
+
+    private Photo currentPhoto;
+    private boolean analysingPhoto = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,15 +112,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setTitle(R.string.app_name);
         lastPressedTime = System.currentTimeMillis() - 2000;
 
-        // Twitter Sharing
-//        TwitterAuthConfig authConfig =  new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
+        // Fabric
         Fabric.with(this, /*new Twitter(authConfig),*/ new Crashlytics());
     }
 
     private void initView() {
         detect = (ImageButton)findViewById(R.id.detect);
         getImage = (Button)findViewById(R.id.getImage);
-        photo = (ImageView)findViewById(R.id.photo);
+        photoView = (ImageView)findViewById(R.id.photo);
         waiting = (FrameLayout)findViewById(R.id.waiting);
         saveImage = (Button)findViewById(R.id.saveImage);
         ring = (ProgressBar)findViewById(R.id.ring);
@@ -118,14 +128,117 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initEvent() {
-        getImage.setOnClickListener(this);
-        detect.setOnClickListener(this);
-        saveImage.setOnClickListener(this);
-
+        // fade in and out animation for the activity
         AlphaAnimation animation = new AlphaAnimation(0.0f, 1.0f);
         animation.setFillAfter(true);
         animation.setDuration(1800);
         relativeLayout.startAnimation(animation);
+
+        // initialise currentPhoto object
+        currentPhoto = new Photo();
+
+        getImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                setTitle(R.string.select_image);
+
+                Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                getIntent.setType("image/*");
+
+                Intent pickIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                pickIntent.setType("image/*");
+
+                // allows picking from other galleries as well
+                Intent chooserIntent = Intent.createChooser(getIntent, "Select Photo");
+                chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, pickIntent);
+
+                try {
+                    startActivityForResult(chooserIntent, PICK_CODE);
+                } catch (Exception e) {
+                    Crashlytics.logException(e);
+                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, getString(R.string.no_app_to_pick_photo), Toast.LENGTH_SHORT).show();
+                }
+
+            }
+        });
+        
+//        detect.setOnClickListener(this);
+        detect.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (!isNetworkConnected()) {                // no internet
+                    Toast.makeText(MainActivity.this, getString(R.string.no_internet_connection), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if (!currentPhoto.hasPhoto()) {
+                    Toast.makeText(MainActivity.this, getString(R.string.no_photo_selected), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                analysingPhoto = true;
+                waiting.setVisibility(View.VISIBLE);
+                ring.setVisibility(View.VISIBLE);
+
+                Map<String, String> params = new HashMap<>();
+                params.put("api_key", Constants.FACEPP_API_KEY);
+                params.put("api_secret", Constants.FACEPP_API_SECRET);
+                params.put("return_attributes", "gender,age");
+
+                Map<String, VolleyMultipartRequest.DataPart> data = new HashMap<>();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                Bitmap resizedPhoto = resizePhoto(currentPhoto.getImageBitmap());
+                resizedPhoto.compress(Bitmap.CompressFormat.JPEG, 100, bos);
+                VolleyMultipartRequest.DataPart dataPart = new VolleyMultipartRequest.DataPart("detect.jpg", bos.toByteArray(), "image/jpeg");
+                data.put("image_file", dataPart);
+
+                // sent the post request
+                FacePlusPlus.detectFace(MainActivity.this, params, data, new Response.Listener<NetworkResponse>() {
+                    @Override
+                    public void onResponse(NetworkResponse response) {
+                        setTitle(getString(R.string.app_name));
+                        analysingPhoto = false;
+                        waiting.setVisibility(View.GONE);
+                        ring.setVisibility(View.INVISIBLE);
+
+                        String detectionResult = new String(response.data);
+                        try {
+                            JSONObject result = new JSONObject(detectionResult);
+                            result.getJSONArray("faces");
+
+                            if (response.statusCode == 200) {
+                                // TODO: draw squares on it
+                                Log.d("DetectResult", result.toString());
+                            }
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        setTitle(getString(R.string.app_name));
+                        analysingPhoto = false;
+                        waiting.setVisibility(View.GONE);
+                        ring.setVisibility(View.INVISIBLE);
+
+                        error.printStackTrace();
+
+                        Toast.makeText(MainActivity.this, "Failed to analyse the photoView", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+
+//        saveImage.setOnClickListener(this);
+        saveImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // TODO:
+            }
+        });
     }
 
     @Override
@@ -161,7 +274,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 try {
                     takePhoto();
                 } catch (Exception e){
-                    // do nothing
+                    e.printStackTrace();
                 }
 
                 return true;
@@ -229,7 +342,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             // continue if successfully created
             if (photoFile != null) {
-                // TODO: save photo to gallery first
                 takePicture.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
                 startActivityForResult(takePicture, REQUEST_TAKE_PHOTO);
             }
@@ -280,20 +392,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 break;
 
-            case R.id.getImage:
-                setTitle(R.string.select_image);
-                Intent intent = new Intent(Intent.ACTION_PICK);
-                intent.setType("image/*");
-                try {
-                    startActivityForResult(intent, PICK_CODE);
-                } catch (Exception e) {
-                    Crashlytics.logException(e);
-                    e.printStackTrace();
-                    Toast.makeText(MainActivity.this, getString(R.string.no_app_to_pick_photo), Toast.LENGTH_SHORT).show();
-                }
-
-                break;
-
             case R.id.detect:
                 if (!isNetworkConnected()) {        // no internet
                     Toast.makeText(MainActivity.this, getString(R.string.no_internet_connection), Toast.LENGTH_SHORT).show();
@@ -309,7 +407,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     break;
                 }
 
-                resizePhoto();
+                Bitmap resizedBitmap = resizePhoto(currentPhoto.getImageBitmap());
 
                 FaceppDetect.detect(photoImage, new FaceppDetect.Callback() {
                     @Override
@@ -340,22 +438,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String imageFileName = "FACEDET_" + timeStamp;
         Log.i("IMAGE", imageFileName);
 
-        /*
-        方法一
-         */
-//        File sd = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-//        Log.i("IMAGE", sd.toString());
-//
-//        Intent saveImage = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-//        File outputImage = new File(currentPhotoStr);
-//        Uri contentUri = Uri.fromFile(outputImage);
-//
-//        saveImage.setData(contentUri);
-//        this.sendBroadcast(saveImage);
-
-        /*
-        方法二
-         */
         Bitmap forSave = photoImage;
         MediaStore.Images.Media.insertImage(context.getContentResolver(), forSave, imageFileName, timeStamp);
 
@@ -364,67 +446,61 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == PICK_CODE) {
-            if (data != null) {
-                if (resultCode == RESULT_CANCELED)
+        switch (requestCode) {
+            case PICK_CODE:
+                if (data != null) {
+                    if (resultCode == RESULT_CANCELED)
+                        return;
+
+                    try {
+                        Log.d("OnActivityResult", "Pick image form gallery");
+
+                        InputStream is = getContentResolver().openInputStream(data.getData());
+                        currentPhoto.setImageBitmap(BitmapFactory.decodeStream(is));
+                        photoView.setImageBitmap(currentPhoto.getImageBitmap());
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                }
+                break;
+
+            case REQUEST_TAKE_PHOTO:
+                // TODO:
+
+                if (resultCode == RESULT_CANCELED) {
+                    Log.i("CAPTURE", "Failed");
+                    currentPhotoStr = null;
                     return;
-
-                Uri uri = data.getData();
-                Cursor cursor = getContentResolver().query(uri, null, null, null, null);
-                if(cursor != null)
-                    cursor.moveToFirst();
-
-                try {
-                    assert cursor != null;
-                    int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
-                    currentPhotoStr = cursor.getString(idx);
-                    cursor.close();
-
-                    resizePhoto();
-                } catch (Exception e) {
-                    Crashlytics.logException(e);
-                    e.printStackTrace();
-                    Toast.makeText(MainActivity.this, getString(R.string.fail_to_read_storage), Toast.LENGTH_SHORT).show();
                 }
 
-                photo.setImageBitmap(photoImage);
-            }
-        }
+                if (currentPhotoStr != null) {
+                    Log.i("CAPTURE", currentPhotoStr);
+                } else {
+                    Toast.makeText(MainActivity.this, getString(R.string.fail_to_capture_image), Toast.LENGTH_SHORT).show();
+                }
 
-        if (requestCode == REQUEST_TAKE_PHOTO) {
-            if (resultCode == RESULT_CANCELED) {
-                Log.i("CAPTURE", "Failed");
-                currentPhotoStr = null;
-                return;
-            }
-
-            if (currentPhotoStr != null) {
-                Log.i("CAPTURE", currentPhotoStr);
-                resizePhoto();
-            } else {
-                Toast.makeText(MainActivity.this, getString(R.string.fail_to_capture_image), Toast.LENGTH_SHORT).show();
-            }
-
-            photo.setImageBitmap(photoImage);
+                photoView.setImageBitmap(photoImage);
+                break;
         }
 
         super.onActivityResult(requestCode, resultCode, data);
     }
 
     // 压缩图片，防止过大
-    private void resizePhoto() {
-        BitmapFactory.Options option = new BitmapFactory.Options();
-        option.inJustDecodeBounds = true;
+    private Bitmap resizePhoto(Bitmap bitmap) {
+        int originalWidth = bitmap.getWidth();
+        int originalHeight = bitmap.getHeight();
 
-        BitmapFactory.decodeFile(currentPhotoStr, option);
+        if (Math.max(originalWidth, originalHeight) <= 4096) {              // hardcoded limit from website
+            return bitmap;
+        }
 
-        double ratio = Math.max(option.outWidth * 1.0d / 1024f, option.outHeight * 1.0d / 1024f);
+        double ratio = 4096 / Math.max(originalWidth, originalHeight);
+        int newWidth = (int) Math.floor(originalWidth * ratio);
+        int newHeight = (int) Math.floor(originalHeight * ratio);
 
-        option.inSampleSize = (int)Math.ceil(ratio);
-        option.inJustDecodeBounds = false;
-
-        // 第一次将从Gallery中获取的图片加给photoImage
-        photoImage = BitmapFactory.decodeFile(currentPhotoStr, option);
+//        return Bitmap.createScaledBitmap(bitmap, option.outWidth, option.outHeight, false);
+        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
     }
 
     private static final int MSG_SUCCESS = 0x111;
@@ -437,28 +513,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 case MSG_SUCCESS:
                     waiting.setVisibility(View.INVISIBLE);           // INVISIBLE 还是 GONE 要注意
                     ring.setVisibility(View.INVISIBLE);
-//                    count.setVisibility(View.VISIBLE);
                     FaceppResult result = (FaceppResult) msg.obj;
 
                     // 解析JsonObject，绘制脸部框
                     prepareResultBitmap(result);
 
-                    photo.setImageBitmap(photoImage);
+                    photoView.setImageBitmap(photoImage);
 
                     break;
 
                 case MSG_ERROR:
                     waiting.setVisibility(View.GONE);
                     ring.setVisibility(View.INVISIBLE);
-//                    count.setVisibility(View.VISIBLE);
                     String errorMsg = msg.obj.toString();
 
                     if (TextUtils.isEmpty(errorMsg)) {
                         Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
-//                        count.setText("Error");
                     } else {
                         Toast.makeText(MainActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
-//                        count.setText(errorMsg);
                     }
 
                     break;
@@ -531,7 +603,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 int ageHeight = ageBitmap.getHeight();
 
                 if (bitmap.getWidth() < photoImage.getWidth() && bitmap.getHeight() < photoImage.getHeight()) {
-                    float ratio = Math.max(bitmap.getWidth() * 1.0f / photo.getWidth(), bitmap.getHeight() * 1.0f / photo.getHeight());
+                    float ratio = Math.max(bitmap.getWidth() * 1.0f / photoView.getWidth(), bitmap.getHeight() * 1.0f / photoView.getHeight());
                     ageBitmap = Bitmap.createScaledBitmap(ageBitmap, (int)(ageWidth * ratio), (int)(ageHeight * ratio), false);
                 }
 
