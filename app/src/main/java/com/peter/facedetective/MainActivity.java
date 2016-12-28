@@ -1,7 +1,6 @@
 package com.peter.facedetective;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -13,16 +12,15 @@ import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.os.Message;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.ShareActionProvider;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -42,8 +40,6 @@ import com.android.volley.NetworkResponse;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.crashlytics.android.Crashlytics;
-import com.facepp.error.FaceppParseException;
-import com.facepp.result.FaceppResult;
 import com.peter.facedetective.models.Photo;
 import com.peter.facedetective.models.VolleyMultipartRequest;
 import com.peter.facedetective.utils.FacePlusPlus;
@@ -64,9 +60,7 @@ import java.io.OutputStream;
 import java.util.*;
 import java.text.SimpleDateFormat;
 
-import static com.peter.facedetective.models.VolleyMultipartRequest.*;
-
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity {
 
     private ImageButton detect;
     private Button getImage;
@@ -79,7 +73,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String currentPhotoStr;
     private boolean hasAnalysedPhoto;
 
-    private Bitmap photoImage;          // current
     private Paint paint;
 
     private long lastPressedTime;
@@ -89,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     static final int PERMISSION_NETWORK_STATE_REQUEST_CODE      = 0x103;
 
     private static final int PICK_CODE                          = 0x233;
-    private static final int REQUEST_TAKE_PHOTO                 = 0x232;
+    private static final int CAMERA_CODE                        = 0x232;
 
     private RelativeLayout relativeLayout;
     private ShareActionProvider shareActionProvider;
@@ -141,6 +134,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         getImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if (Build.VERSION.SDK_INT >= 23) {
+                    int readWritePermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                    if (readWritePermission == PackageManager.PERMISSION_DENIED) {
+                        Toast.makeText(MainActivity.this, getString(R.string.no_read_write_permission), Toast.LENGTH_SHORT).show();
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_READ_WRITE_REQUEST_CODE);
+                        return;
+                    }
+                }
+
                 setTitle(R.string.select_image);
 
                 Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -177,6 +179,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     return;
                 }
 
+                if (analysingPhoto)
+                    return;
+
                 analysingPhoto = true;
                 waiting.setVisibility(View.VISIBLE);
                 ring.setVisibility(View.VISIBLE);
@@ -201,6 +206,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         analysingPhoto = false;
                         waiting.setVisibility(View.GONE);
                         ring.setVisibility(View.INVISIBLE);
+                        currentPhoto.setAnalysed(true);
 
                         String detectionResult = new String(response.data);
                         try {
@@ -237,7 +243,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         saveImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // TODO:
+                if (Build.VERSION.SDK_INT >= 23) {
+                    int readWritePermission = ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                    if (readWritePermission == PackageManager.PERMISSION_DENIED) {
+                        Toast.makeText(MainActivity.this, getString(R.string.no_read_write_permission), Toast.LENGTH_SHORT).show();
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_READ_WRITE_REQUEST_CODE);
+                        return;
+                    }
+                }
+
+                if (!currentPhoto.hasPhoto() || !currentPhoto.isAnalysed()) {
+                    Toast.makeText(MainActivity.this, getString(R.string.no_available_photo_to_save), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                String imageFileName = "FACEDET_" + timeStamp;
+                MediaStore.Images.Media.insertImage(getContentResolver(), currentPhoto.getImageBitmap(), imageFileName, timeStamp);
+                Toast.makeText(MainActivity.this, getString(R.string.picture_is_saved), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -250,7 +273,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     private Bitmap prepareResultBitmap(Bitmap originalBitmap, JSONArray faces) {
         if (originalBitmap == null)
-            return originalBitmap;
+            return null;
 
         // 根据原图创建一个新的空画板
         Bitmap newBitmap = Bitmap.createBitmap(originalBitmap.getWidth(), originalBitmap.getHeight(), originalBitmap.getConfig());              // 此bitmap为最终的用来呈现给用户的图像
@@ -269,10 +292,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 Log.i("Face", face.toString());
 
-                float top = (float) rect.getDouble("top");                 // y-coord of top left
-                float left = (float) rect.getDouble("left");               // x-coord of top left
-                float width = (float) rect.getDouble("width");             // width
-                float height = (float) rect.getDouble("height");           // height
+                float rectTop = (float) rect.getDouble("top");                 // y-coord of top left
+                float rectLeft = (float) rect.getDouble("left");               // x-coord of top left
+                float rectWidth = (float) rect.getDouble("width");             // width
+                float rectHeight = (float) rect.getDouble("height");           // height
 
                 // 百分比转换为实际像素值
                 paint.setColor(Color.WHITE);
@@ -280,10 +303,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 // 画脸部区域的box
                 // 开始点的横纵坐标，结束点的横纵坐标
-                canvas.drawLine(left, top, left + width, top, paint);                   // top line
-                canvas.drawLine(left + width, top, left + width, top + height, paint);  // right line
-                canvas.drawLine(left, top, left, top + height, paint);                  // left line
-                canvas.drawLine(left, top + height, left + width, top + height, paint); // bottom line
+                canvas.drawLine(rectLeft, rectTop, rectLeft + rectWidth, rectTop, paint);                   // top line
+                canvas.drawLine(rectLeft + rectWidth, rectTop, rectLeft + rectWidth, rectTop + rectHeight, paint);  // right line
+                canvas.drawLine(rectLeft, rectTop, rectLeft, rectTop + rectHeight, paint);                  // left line
+                canvas.drawLine(rectLeft, rectTop + rectHeight, rectLeft + rectWidth, rectTop + rectHeight, paint); // bottom line
 
                 // 年龄和性别
                 int age = face.getJSONObject("attributes").getJSONObject("age").getInt("value");
@@ -295,6 +318,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 // 根据图像大小缩放
                 double ratio = (double) ageBitmap.getHeight() / (double) ageBitmap.getWidth();
                 int ageWidth = 200;
+                if (ageWidth > rectWidth / 2.0f)                // in case image is small
+                    ageWidth = (int) (rectWidth / 2.0f);
                 int ageHeight = (int) (ageWidth * ratio);
 
                 if (ageWidth < newBitmap.getWidth() && ageHeight < newBitmap.getHeight()) {
@@ -302,7 +327,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
 
                 // 将年龄与性别框绘制到指定的位置
-                canvas.drawBitmap(ageBitmap, left + width / 2 - ageWidth / 2, top - ageHeight, null);
+                canvas.drawBitmap(ageBitmap, rectLeft + rectWidth / 2 - ageWidth / 2, rectTop - ageHeight, null);
 
                 setTitle(R.string.app_name);
             }
@@ -360,7 +385,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int id = item.getItemId();
         switch (id) {
             case R.id.action_camera:
-
                 if (Build.VERSION.SDK_INT >= 23) {
                     int cameraPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
                     if (cameraPermission == PackageManager.PERMISSION_DENIED) {
@@ -371,7 +395,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
 
                 try {
-                    takePhoto();
+                    Intent takePhotoIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    if (takePhotoIntent.resolveActivity(getPackageManager()) != null) {
+                        File photoFile = createImageFile();
+
+                        // for Android 7.0 and higher, now provides FileUriExposedException, suckers
+                        Uri photoUri = FileProvider.getUriForFile(this,
+                                                                "com.peter.facedetective.fileprovider",
+                                                                photoFile);
+                        takePhotoIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+                        startActivityForResult(takePhotoIntent, CAMERA_CODE);
+                    }
                 } catch (Exception e){
                     e.printStackTrace();
                 }
@@ -379,6 +413,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return true;
 
             case R.id.action_share:
+                // TODO:
+
                 if (hasAnalysedPhoto) {
                     File fileToShare;
                     try {
@@ -395,13 +431,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         e.printStackTrace();
                     }
 
-                    if (photoImage != null) {
-                        Bitmap bitmap = photoImage;
-                        bitmap.compress(Bitmap.CompressFormat.PNG, 0, os);
-                    } else {
-                        Toast.makeText(MainActivity.this, getString(R.string.unable_to_share_photo), Toast.LENGTH_SHORT).show();
-                        return true;
-                    }
+//                    if (photoImage != null) {
+//                        Bitmap bitmap = photoImage;
+//                        bitmap.compress(Bitmap.CompressFormat.PNG, 0, os);
+//                    } else {
+//                        Toast.makeText(MainActivity.this, getString(R.string.unable_to_share_photo), Toast.LENGTH_SHORT).show();
+//                        return true;
+//                    }
 
                     try {
                         assert os != null;
@@ -428,121 +464,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return super.onOptionsItemSelected(item);
     }
 
-    private void takePhoto() throws IOException {
-        Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        // ensure that there is a camera activity to handle the intent
-        if (takePicture.resolveActivity(getPackageManager()) != null) {
-            File photoFile = null;
-            try {
-                photoFile = createImageFile();
-            } catch (IOException e) {
-                Toast.makeText(this, R.string.something_happened, Toast.LENGTH_SHORT).show();
-            }
-
-            // continue if successfully created
-            if (photoFile != null) {
-                takePicture.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
-                startActivityForResult(takePicture, REQUEST_TAKE_PHOTO);
-            }
-        }
-    }
-
-    private File createImageFile() throws IOException {
-        // Create an image file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "FACEDET_" + timeStamp;
-        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(
-                imageFileName,  /* prefix */
-                ".jpg",         /* suffix */
-                storageDir      /* directory */
-        );
-
-        // Save a file: path for use with ACTION_VIEW intents
-//        currentPhotoStr = "file:" + image.getAbsolutePath();
-        currentPhotoStr = image.getAbsolutePath();
-        return image;
-    }
-
-
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()){
-            case R.id.saveImage:
-            case R.id.getImage:
-                if (Build.VERSION.SDK_INT >= 23) {
-                    int readWritePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-                    if (readWritePermission == PackageManager.PERMISSION_DENIED) {
-                        Toast.makeText(MainActivity.this, getString(R.string.no_read_write_permission), Toast.LENGTH_SHORT).show();
-                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_READ_WRITE_REQUEST_CODE);
-                        return;
-                    }
-                }
-                break;
-        }
-
-        switch (v.getId()) {
-            case R.id.saveImage:
-                if (!hasAnalysedPhoto)
-                    Toast.makeText(this, R.string.no_available_photo_to_save, Toast.LENGTH_SHORT).show();
-                else {
-                    saveImageToGallery(MainActivity.this);
-                }
-
-                break;
-
-            case R.id.detect:
-                if (!isNetworkConnected()) {        // no internet
-                    Toast.makeText(MainActivity.this, getString(R.string.no_internet_connection), Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if (currentPhotoStr != null && !currentPhotoStr.trim().equals("")) {
-                    setTitle(R.string.detecting);
-                    waiting.setVisibility(View.VISIBLE);
-                    ring.setVisibility(View.VISIBLE);
-                } else {
-                    Toast.makeText(this, R.string.no_photo_selected, Toast.LENGTH_SHORT).show();
-                    break;
-                }
-
-                Bitmap resizedBitmap = resizePhoto(currentPhoto.getImageBitmap());
-
-                FaceppDetect.detect(photoImage, new FaceppDetect.Callback() {
-                    @Override
-                    public void success(FaceppResult result) {
-                        Message msg = Message.obtain();
-                        msg.what = MSG_SUCCESS;
-                        msg.obj = result;
-                        handler.sendMessage(msg);
-                    }
-
-                    @Override
-                    public void error(FaceppParseException exception) {
-                        Message msg = Message.obtain();
-                        msg.what = MSG_ERROR;
-                        msg.obj = exception.getErrorMessage();
-                        handler.sendMessage(msg);
-//                        setTitle(R.string.app_name);
-                    }
-                }, MainActivity.this);
-
-                hasAnalysedPhoto = true;
-                break;
-        }
-    }
-
-    private void saveImageToGallery(Context context) {
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "FACEDET_" + timeStamp;
-        Log.i("IMAGE", imageFileName);
-
-        Bitmap forSave = photoImage;
-        MediaStore.Images.Media.insertImage(context.getContentResolver(), forSave, imageFileName, timeStamp);
-
-        Toast.makeText(context, R.string.picture_is_saved, Toast.LENGTH_SHORT).show();
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
@@ -556,6 +477,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                         InputStream is = getContentResolver().openInputStream(data.getData());
                         currentPhoto.setImageBitmap(BitmapFactory.decodeStream(is));
+                        currentPhoto.setAnalysed(false);
                         photoView.setImageBitmap(currentPhoto.getImageBitmap());
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
@@ -563,26 +485,50 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
 
-            case REQUEST_TAKE_PHOTO:
-                // TODO:
+            case CAMERA_CODE:
+                if (resultCode == RESULT_OK) {
+                    int targetWidth = photoView.getWidth();
+                    int targetHeight = photoView.getHeight();
 
-                if (resultCode == RESULT_CANCELED) {
-                    Log.i("CAPTURE", "Failed");
-                    currentPhotoStr = null;
-                    return;
+                    // Get the dimensions of the bitmap
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inJustDecodeBounds = true;
+                    BitmapFactory.decodeFile(currentPhoto.getPhotoPath(), options);
+                    int photoWidth = options.outWidth;
+                    int photoHeight = options.outHeight;
+
+                    // Determine how much to scale down the image
+                    int scaleFactor = Math.min(photoWidth / targetWidth, photoHeight / targetHeight);
+
+                    // Decode the image file into a Bitmap sized to fill the view
+                    options.inJustDecodeBounds = false;
+                    options.inSampleSize = scaleFactor;
+                    options.inPurgeable = true;
+
+                    currentPhoto.setImageBitmap(BitmapFactory.decodeFile(currentPhoto.getPhotoPath(), options));
+                    currentPhoto.setAnalysed(false);
+                    photoView.setImageBitmap(currentPhoto.getImageBitmap());
                 }
-
-                if (currentPhotoStr != null) {
-                    Log.i("CAPTURE", currentPhotoStr);
-                } else {
-                    Toast.makeText(MainActivity.this, getString(R.string.fail_to_capture_image), Toast.LENGTH_SHORT).show();
-                }
-
-                photoView.setImageBitmap(photoImage);
                 break;
         }
 
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "FACEDET_" + timeStamp + "ORIGINAL";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        currentPhoto.setPhotoPath(image.getAbsolutePath());
+        return image;
     }
 
     // 压缩图片，防止过大
@@ -600,42 +546,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
     }
-
-    private static final int MSG_SUCCESS = 0x111;
-    private static final int MSG_ERROR = 0x112;
-
-    android.os.Handler handler = new android.os.Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case MSG_SUCCESS:
-                    waiting.setVisibility(View.INVISIBLE);           // INVISIBLE 还是 GONE 要注意
-                    ring.setVisibility(View.INVISIBLE);
-                    FaceppResult result = (FaceppResult) msg.obj;
-
-                    // 解析JsonObject，绘制脸部框
-//                    prepareResultBitmap(result);
-
-                    photoView.setImageBitmap(photoImage);
-
-                    break;
-
-                case MSG_ERROR:
-                    waiting.setVisibility(View.GONE);
-                    ring.setVisibility(View.INVISIBLE);
-                    String errorMsg = msg.obj.toString();
-
-                    if (TextUtils.isEmpty(errorMsg)) {
-                        Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(MainActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
-                    }
-
-                    break;
-            }
-            super.handleMessage(msg);
-        }
-    };
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {

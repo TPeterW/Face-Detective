@@ -32,6 +32,16 @@
             </intent-filter>
         </activity>
 
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="com.peter.facedetective.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
+
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="5ee73257befb8f5b0e02c043ff92e04db8dd08d0" />
