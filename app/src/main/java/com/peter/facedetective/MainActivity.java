@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.net.ConnectivityManager;
 import android.net.Uri;
@@ -163,7 +164,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
         
-//        detect.setOnClickListener(this);
         detect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -205,13 +205,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         String detectionResult = new String(response.data);
                         try {
                             JSONObject result = new JSONObject(detectionResult);
-                            result.getJSONArray("faces");
+                            JSONArray faces = result.getJSONArray("faces");
 
                             if (response.statusCode == 200) {
-                                // TODO: draw squares on it
                                 Log.d("DetectResult", result.toString());
+                                if (faces.length() > 0) {
+                                    currentPhoto.setImageBitmap(prepareResultBitmap(currentPhoto.getImageBitmap(), faces));
+                                    photoView.setImageBitmap(currentPhoto.getImageBitmap());
+                                }
                             }
-
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -232,13 +234,110 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
-//        saveImage.setOnClickListener(this);
         saveImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // TODO:
             }
         });
+    }
+
+    /***
+     * Prepare for adding ages and stuff
+     * @param originalBitmap    original bitmap
+     * @param faces             list of JSONObjects that are faces
+     * @return preparedBitmap
+     */
+    private Bitmap prepareResultBitmap(Bitmap originalBitmap, JSONArray faces) {
+        if (originalBitmap == null)
+            return originalBitmap;
+
+        // 根据原图创建一个新的空画板
+        Bitmap newBitmap = Bitmap.createBitmap(originalBitmap.getWidth(), originalBitmap.getHeight(), originalBitmap.getConfig());              // 此bitmap为最终的用来呈现给用户的图像
+        Canvas canvas = new Canvas(newBitmap);                // 把bitmap当作一幅canvas作画
+
+        //将原图画入
+        canvas.drawBitmap(originalBitmap, 0, 0, null);
+
+        setTitle(R.string.app_name);
+
+        try {
+            for (int i = 0; i < faces.length(); i++) {
+                // 拿到单独的face对象
+                JSONObject face = faces.getJSONObject(i);
+                JSONObject rect = face.getJSONObject("face_rectangle");
+
+                Log.i("Face", face.toString());
+
+                float top = (float) rect.getDouble("top");                 // y-coord of top left
+                float left = (float) rect.getDouble("left");               // x-coord of top left
+                float width = (float) rect.getDouble("width");             // width
+                float height = (float) rect.getDouble("height");           // height
+
+                // 百分比转换为实际像素值
+                paint.setColor(Color.WHITE);
+                paint.setStrokeWidth(5);
+
+                // 画脸部区域的box
+                // 开始点的横纵坐标，结束点的横纵坐标
+                canvas.drawLine(left, top, left + width, top, paint);                   // top line
+                canvas.drawLine(left + width, top, left + width, top + height, paint);  // right line
+                canvas.drawLine(left, top, left, top + height, paint);                  // left line
+                canvas.drawLine(left, top + height, left + width, top + height, paint); // bottom line
+
+                // 年龄和性别
+                int age = face.getJSONObject("attributes").getJSONObject("age").getInt("value");
+                String gender = face.getJSONObject("attributes").getJSONObject("gender").getString("value");
+
+                // 生成合适的用TextView控件表示的年龄和性别框
+                Bitmap ageBitmap = buildAgeBitmap(age, "Male".equals(gender));
+
+                // 根据图像大小缩放
+                double ratio = (double) ageBitmap.getHeight() / (double) ageBitmap.getWidth();
+                int ageWidth = 200;
+                int ageHeight = (int) (ageWidth * ratio);
+
+                if (ageWidth < newBitmap.getWidth() && ageHeight < newBitmap.getHeight()) {
+                    ageBitmap = Bitmap.createScaledBitmap(ageBitmap, ageWidth, ageHeight, false);
+                }
+
+                // 将年龄与性别框绘制到指定的位置
+                canvas.drawBitmap(ageBitmap, left + width / 2 - ageWidth / 2, top - ageHeight, null);
+
+                setTitle(R.string.app_name);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return newBitmap;
+    }
+
+    private Bitmap buildAgeBitmap(int age, boolean isMale) {
+        TextView ageAndGender = (TextView)waiting.findViewById(R.id.ageAndGender);
+        ageAndGender.setText(String.valueOf(age));
+        if (isMale){
+            ageAndGender.setCompoundDrawablesWithIntrinsicBounds(ContextCompat.getDrawable(this, R.drawable.male), null, null, null);           // 左上右下
+        }
+        else {
+            ageAndGender.setCompoundDrawablesWithIntrinsicBounds(ContextCompat.getDrawable(this, R.drawable.female), null, null, null);
+        }
+        ageAndGender.setDrawingCacheEnabled(true);
+
+        /*
+        此段代码是防止DrawingCache为空
+         */
+        ageAndGender.measure(
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        ageAndGender.layout(0, 0, ageAndGender.getMeasuredWidth(),
+                ageAndGender.getMeasuredHeight());
+        ageAndGender.buildDrawingCache();
+
+        Bitmap bitmap = Bitmap.createBitmap(ageAndGender.getDrawingCache());
+        ageAndGender.destroyDrawingCache();
+
+        return bitmap;
     }
 
     @Override
@@ -499,7 +598,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int newWidth = (int) Math.floor(originalWidth * ratio);
         int newHeight = (int) Math.floor(originalHeight * ratio);
 
-//        return Bitmap.createScaledBitmap(bitmap, option.outWidth, option.outHeight, false);
         return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
     }
 
@@ -516,7 +614,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     FaceppResult result = (FaceppResult) msg.obj;
 
                     // 解析JsonObject，绘制脸部框
-                    prepareResultBitmap(result);
+//                    prepareResultBitmap(result);
 
                     photoView.setImageBitmap(photoImage);
 
@@ -538,115 +636,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             super.handleMessage(msg);
         }
     };
-
-    private void prepareResultBitmap(FaceppResult result) {
-        if (photoImage == null)
-            return;
-
-        // 根据原图创建一个新的空画板
-        Bitmap bitmap = Bitmap.createBitmap(photoImage.getWidth(), photoImage.getHeight(), photoImage.getConfig());              // 此bitmap为最终的用来呈现给用户的图像
-        Canvas canvas = new Canvas(bitmap);                // 把bitmap当作一幅canvas作画
-
-        //将原图画入
-        canvas.drawBitmap(photoImage, 0, 0, null);
-
-        try {
-            // 转换成JSONObject
-            JSONObject rs = new JSONObject(result.toString());
-            JSONArray faces = rs.getJSONArray("face");
-
-            setTitle(R.string.app_name);
-
-            int faceCount = faces.length();
-//            count.setText("No: " + faceCount);
-
-            for (int i = 0; i < faceCount; i++) {
-                // 拿到单独的face对象
-                JSONObject face = faces.getJSONObject(i);
-                JSONObject posObj = face.getJSONObject("position");
-
-                /*
-                 代表图片高度/宽度的百分比
-                 中心点的位置
-                  */
-                float x = (float) posObj.getJSONObject("center").getDouble("x");
-                float y = (float) posObj.getJSONObject("center").getDouble("y");
-
-                float w = (float) posObj.getDouble("width");
-                float h = (float) posObj.getDouble("height");
-
-                // 百分比转换为实际像素值
-                x = x / 100 * bitmap.getWidth();
-                y = y / 100 * bitmap.getHeight();
-                w = w / 100 * bitmap.getWidth();
-                h = h / 100 * bitmap.getHeight();
-
-                paint.setColor(0xffffffff);
-                paint.setStrokeWidth(5);
-
-                // 画脸部区域的box
-                // 开始点的横纵坐标，结束点的横纵坐标
-                canvas.drawLine(x - w/2, y - h/2, x - w/2, y + h/2, paint);
-                canvas.drawLine(x - w/2, y + h/2, x + w/2, y + h/2, paint);
-                canvas.drawLine(x + w/2, y - h/2, x + w/2, y + h/2, paint);
-                canvas.drawLine(x - w/2, y - h/2, x + w/2, y - h/2, paint);
-
-                // 年龄和性别
-                int age = face.getJSONObject("attribute").getJSONObject("age").getInt("value");
-                String gender = face.getJSONObject("attribute").getJSONObject("gender").getString("value");
-
-                // 生成合适的用TextView控件表示的年龄和性别框
-                Bitmap ageBitmap = buildAgeBitmap(age, "Male".equals(gender));
-
-                // 根据图像大小缩放
-                int ageWidth = ageBitmap.getWidth();
-                int ageHeight = ageBitmap.getHeight();
-
-                if (bitmap.getWidth() < photoImage.getWidth() && bitmap.getHeight() < photoImage.getHeight()) {
-                    float ratio = Math.max(bitmap.getWidth() * 1.0f / photoView.getWidth(), bitmap.getHeight() * 1.0f / photoView.getHeight());
-                    ageBitmap = Bitmap.createScaledBitmap(ageBitmap, (int)(ageWidth * ratio), (int)(ageHeight * ratio), false);
-                }
-
-                // 将年龄与性别框绘制到指定的位置
-                canvas.drawBitmap(ageBitmap, x - ageBitmap.getWidth() / 2, y - h/2 - ageBitmap.getHeight(), null);
-
-                photoImage = bitmap;
-
-                setTitle(R.string.app_name);
-            }
-        } catch (Exception ignored) {
-            // ignore exception
-        }
-
-    }
-
-    private Bitmap buildAgeBitmap(int age, boolean isMale) {
-//        TextView ageAndGender = (TextView)findViewById(R.id.ageAndGender);
-        TextView ageAndGender = (TextView)waiting.findViewById(R.id.ageAndGender);
-        ageAndGender.setText(Integer.toString(age));
-        if (isMale){
-            ageAndGender.setCompoundDrawablesWithIntrinsicBounds(ContextCompat.getDrawable(this, R.drawable.male), null, null, null);           // 左上右下
-        }
-        else {
-            ageAndGender.setCompoundDrawablesWithIntrinsicBounds(ContextCompat.getDrawable(this, R.drawable.female), null, null, null);
-        }
-        ageAndGender.setDrawingCacheEnabled(true);
-
-        /*
-        此段代码是防止DrawingCache为空
-         */
-        ageAndGender.measure(
-                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-        ageAndGender.layout(0, 0, ageAndGender.getMeasuredWidth(),
-                ageAndGender.getMeasuredHeight());
-        ageAndGender.buildDrawingCache();
-
-        Bitmap bitmap = Bitmap.createBitmap(ageAndGender.getDrawingCache());
-        ageAndGender.destroyDrawingCache();
-
-        return bitmap;
-    }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
