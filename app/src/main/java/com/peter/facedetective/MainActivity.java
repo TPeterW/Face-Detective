@@ -70,9 +70,6 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar ring;
     private Button saveImage;
 
-    private String currentPhotoStr;
-    private boolean hasAnalysedPhoto;
-
     private Paint paint;
 
     private long lastPressedTime;
@@ -85,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
     private static final int CAMERA_CODE                        = 0x232;
 
     private RelativeLayout relativeLayout;
-    private ShareActionProvider shareActionProvider;
 
     private Photo currentPhoto;
     private boolean analysingPhoto = false;
@@ -98,9 +94,6 @@ public class MainActivity extends AppCompatActivity {
         initView();
 
         initEvent();
-
-        // 确认暂时还没有照片可以保存
-        hasAnalysedPhoto = false;
 
         paint = new Paint();
         setTitle(R.string.app_name);
@@ -369,11 +362,6 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main_activity, menu);
-
-        MenuItem item = menu.findItem(R.id.action_share);
-
-        shareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
-
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -401,8 +389,8 @@ public class MainActivity extends AppCompatActivity {
 
                         // for Android 7.0 and higher, now provides FileUriExposedException, suckers
                         Uri photoUri = FileProvider.getUriForFile(this,
-                                                                "com.peter.facedetective.fileprovider",
-                                                                photoFile);
+                                "com.peter.facedetective.fileprovider",
+                                photoFile);
                         takePhotoIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
                         startActivityForResult(takePhotoIntent, CAMERA_CODE);
                     }
@@ -413,50 +401,31 @@ public class MainActivity extends AppCompatActivity {
                 return true;
 
             case R.id.action_share:
-                // TODO:
-
-                if (hasAnalysedPhoto) {
-                    File fileToShare;
+                if (currentPhoto.hasPhoto() && currentPhoto.isAnalysed()) {
                     try {
-                        fileToShare = new File(currentPhotoStr);
+                        // save it first
+                        File shareFile = createImageFile();
+                        Uri shareUri = FileProvider.getUriForFile(this,
+                                "com.peter.facedetective.fileprovider",
+                                shareFile);
+                        FileOutputStream fos = new FileOutputStream(shareFile);
+                        currentPhoto.getImageBitmap().compress(Bitmap.CompressFormat.JPEG, 100, fos);
+                        fos.close();
+
+                        // and then share it
+                        if (shareUri != null) {
+                            Intent shareIntent = new Intent();
+                            shareIntent.setAction(Intent.ACTION_SEND);
+                            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            shareIntent.putExtra(Intent.EXTRA_STREAM, shareUri);
+                            shareIntent.setType("image/jpeg");
+                            startActivity(Intent.createChooser(shareIntent, getString(R.string.sharing_content)));
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
-                        Toast.makeText(this, getString(R.string.photo_not_found), Toast.LENGTH_SHORT).show();
-                        return true;
                     }
-                    OutputStream os = null;
-                    try {
-                        os = new BufferedOutputStream(new FileOutputStream(fileToShare));
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
-
-//                    if (photoImage != null) {
-//                        Bitmap bitmap = photoImage;
-//                        bitmap.compress(Bitmap.CompressFormat.PNG, 0, os);
-//                    } else {
-//                        Toast.makeText(MainActivity.this, getString(R.string.unable_to_share_photo), Toast.LENGTH_SHORT).show();
-//                        return true;
-//                    }
-
-                    try {
-                        assert os != null;
-                        os.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    Uri imageUri = Uri.fromFile(fileToShare);
-                    Intent shareIntent = new Intent(Intent.ACTION_SEND).setType("image/*");
-                    shareIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
-                    shareIntent.putExtra(Intent.EXTRA_TEXT, getString(R.string.sharing_content));
-
-                    if (shareActionProvider != null)
-                        shareActionProvider.setShareIntent(shareIntent);
-
-                    startActivity(shareIntent);
                 } else {
-                    Toast.makeText(MainActivity.this, R.string.no_available_photo_to_share, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, R.string.picture_not_analysed, Toast.LENGTH_SHORT).show();
                 }
                 return true;
         }
@@ -562,13 +531,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return true;
-
-//        return super.onKeyDown(keyCode, event);
     }
 
     /***
      * Checks if connected to internet
-     * @return
+     * @return connectedOrNot
      */
     private boolean isNetworkConnected() {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);

@@ -14,6 +14,7 @@
     <string name="no_photo_selected">Please select a photo</string>
     <string name="no_available_photo_to_save">No photo available to save</string>
     <string name="no_available_photo_to_share">No photo available to share</string>
+    <string name="picture_not_analysed">Photo has not been analyzed</string>
     <string name="picture_is_saved">Photo is saved to "Pictures" folder in your Gallery</string>
     <string name="found_exception">Exception Found</string>
     <string name="unknown_exception">Unknown Exception</string>
