@@ -17,10 +17,8 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -49,14 +47,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.*;
 import java.text.SimpleDateFormat;
 
@@ -186,7 +182,12 @@ public class MainActivity extends AppCompatActivity {
 
                 Map<String, VolleyMultipartRequest.DataPart> data = new HashMap<>();
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                // resize to fit in the API
                 Bitmap resizedPhoto = resizePhoto(currentPhoto.getImageBitmap());
+                if (resizedPhoto == null) {
+                    Toast.makeText(MainActivity.this, getString(R.string.fail_to_parse_photo), Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 resizedPhoto.compress(Bitmap.CompressFormat.JPEG, 100, bos);
                 VolleyMultipartRequest.DataPart dataPart = new VolleyMultipartRequest.DataPart("detect.jpg", bos.toByteArray(), "image/jpeg");
                 data.put("image_file", dataPart);
@@ -509,11 +510,14 @@ public class MainActivity extends AppCompatActivity {
             return bitmap;
         }
 
-        double ratio = 4096 / Math.max(originalWidth, originalHeight);
+        double ratio = 4096 / (double) Math.max(originalWidth, originalHeight);
         int newWidth = (int) Math.floor(originalWidth * ratio);
         int newHeight = (int) Math.floor(originalHeight * ratio);
 
-        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
+        if (newWidth <= 0 || newHeight <= 0)
+            return null;
+        else
+            return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, false);
     }
 
     @Override

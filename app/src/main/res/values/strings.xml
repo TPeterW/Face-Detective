@@ -28,6 +28,7 @@
     <string name="need_read_write_permission">Face Detective needs permission to access your local storage</string>
     <string name="fail_to_capture_image">Failed to capture image</string>
     <string name="fail_to_read_storage">Failed to read image from local storage</string>
+    <string name="fail_to_parse_photo">Failed to parse photo</string>
     <string name="no_app_to_pick_photo">No app found on this phone to pick a photo</string>
     <string name="unable_to_share_photo">Unable to share photo</string>
     <string name="photo_not_found">Photo not found</string>

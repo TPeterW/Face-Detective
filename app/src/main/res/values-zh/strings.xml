@@ -29,4 +29,5 @@
     <string name="unable_to_share_photo">无法分享照片</string>
     <string name="photo_not_found">找不到照片</string>
     <string name="picture_not_analysed">图片还未检测</string>
+    <string name="fail_to_parse_photo">分析照片失败</string>
 </resources>

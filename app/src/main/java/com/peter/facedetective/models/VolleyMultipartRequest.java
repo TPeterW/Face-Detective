@@ -17,8 +17,8 @@ import java.util.Map;
 
 /**
  * Created by Peter on 12/27/16.
- * Multipart form request for Face++ request
  *
+ * Multipart form request for Face++ request
  */
 public class VolleyMultipartRequest extends Request<NetworkResponse> {
     private final String twoHyphens = "--";
