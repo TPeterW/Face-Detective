@@ -19,18 +19,18 @@ before_cache: "-rm -f $HOME/.gradle/caches/modules-2/modules-2.lock -rm -fr $HOM
 cache:
   directories: "-$HOME/.gradle/caches/ -$HOME/.gradle/wrapper/"
 before_install:
-  - openssl aes-256-cbc -K $encrypted_bd18da2aa154_key -iv $encrypted_bd18da2aa154_iv
+- openssl aes-256-cbc -K $encrypted_bd18da2aa154_key -iv $encrypted_bd18da2aa154_iv
   -in Constants.java.enc -out app/src/main/java/com/peter/facedetective/Constants.java
   -d
-  - mkdir "$ANDROID_HOME/licenses" || true
-  - echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > "$ANDROID_HOME/licenses/android-sdk-license"
-  - echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
-  - chmod +x gradlew
-  - "./gradlew dependencies || true"
+- mkdir "$ANDROID_HOME/licenses" || true
+- echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > "$ANDROID_HOME/licenses/android-sdk-license"
+- echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
+- chmod +x gradlew
+- "./gradlew dependencies || true"
 before_script:
-  - echo no | android create avd --force -n test -t android-21 --abi armeabi-v7a
-  - emulator -avd test -no-audio -no-window &
-  - android-wait-for-emulator
-  - adb shell input keyevent 82 &
+- echo no | android create avd --force -n test -t android-22 --abi armeabi-v7a
+- emulator -avd test -no-audio -no-window &
+- android-wait-for-emulator
+- adb shell input keyevent 82 &
 script:
 - "./gradlew build connectedCheck --stacktrace"
