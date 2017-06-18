@@ -468,7 +468,8 @@ public class MainActivity extends AppCompatActivity {
                     int photoHeight = options.outHeight;
 
                     // Determine how much to scale down the image
-                    int scaleFactor = Math.min(photoWidth / targetWidth, photoHeight / targetHeight);
+                    int scaleFactor = Math.min(photoWidth / targetWidth > 0 ? targetWidth : 1,
+                            photoHeight / targetHeight > 0 ? targetHeight : 1);
 
                     // Decode the image file into a Bitmap sized to fill the view
                     options.inJustDecodeBounds = false;
