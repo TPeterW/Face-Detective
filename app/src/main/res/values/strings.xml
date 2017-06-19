@@ -38,6 +38,7 @@
     <!--Action Bar Icons-->
     <string name="action_camera">Capture Photo</string>
     <string name="action_share">Share</string>
+    <string name="action_privacy">Privacy Policy</string>
 
     <!--Sharing-->
     <string name="sharing_content">Check out how old I look in "Face-Detective"!</string>

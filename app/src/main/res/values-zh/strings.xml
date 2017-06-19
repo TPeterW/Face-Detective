@@ -30,4 +30,5 @@
     <string name="photo_not_found">找不到照片</string>
     <string name="picture_not_analysed">图片还未检测</string>
     <string name="fail_to_parse_photo">分析照片失败</string>
+    <string name="action_privacy">隐私条款</string>
 </resources>

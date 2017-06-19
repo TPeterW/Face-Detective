@@ -429,6 +429,13 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, R.string.picture_not_analysed, Toast.LENGTH_SHORT).show();
                 }
                 return true;
+
+            case R.id.action_privacy:
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://tpeterw.github.io/sub/apps/privacy-ho.html")));
+                return true;
+
+            default:
+                break;
         }
 
         return super.onOptionsItemSelected(item);
